@@ -40,27 +40,34 @@ async def start_reconstruction(
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         
-        # Get images - ONLY suitable or verified images
-        images_result = await db.execute(
-            select(Image).where(
-                Image.project_id == project_id,
-                (Image.is_suitable == True) | (Image.is_verified == True)
-            )
-        )
-        images = images_result.scalars().all()
-        
-        # Also get rejected count for warning
+        # Get ALL images first
         all_images_result = await db.execute(
             select(Image).where(Image.project_id == project_id)
         )
         all_images = all_images_result.scalars().all()
-        rejected_count = len(all_images) - len(images)
+        
+        # Filter images: REJECT if is_suitable=False AND not manually verified
+        # Accept if: is_verified=True OR is_suitable is not False (None or True)
+        images = []
+        rejected_images = []
+        
+        for img in all_images:
+            # If explicitly marked as unsuitable and NOT manually verified → reject
+            if img.is_suitable == False and img.is_verified != True:
+                rejected_images.append(img)
+                logger.info(f"Rejected image: {img.filename} (score={img.forensic_score}, suitable={img.is_suitable}, verified={img.is_verified})")
+            else:
+                images.append(img)
+        
+        rejected_count = len(rejected_images)
+        logger.info(f"Reconstruction: {len(all_images)} total, {len(images)} usable, {rejected_count} rejected")
         
         if len(images) < 2:
             if rejected_count > 0:
+                rejected_names = ", ".join([img.filename for img in rejected_images[:5]])
                 raise HTTPException(
                     status_code=400, 
-                    detail=f"Need at least 2 suitable images for reconstruction. {rejected_count} image(s) were rejected due to forensic validation. Please verify them manually or upload appropriate crime scene photographs."
+                    detail=f"Need at least 2 suitable images for reconstruction. {rejected_count} image(s) were rejected as irrelevant: {rejected_names}. Verify them manually in Evidence Images tab or upload appropriate crime scene photographs."
                 )
             raise HTTPException(status_code=400, detail="Need at least 2 images for reconstruction")
         

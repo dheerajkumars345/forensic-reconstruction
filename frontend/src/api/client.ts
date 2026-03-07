@@ -131,6 +131,13 @@ export const imagesAPI = {
     apiClient.get<ValidationSummary>(
       `/projects/${projectId}/images/validation-summary`,
     ),
+  revalidate: (projectId: number) =>
+    apiClient.post<{
+      message: string;
+      validated: number;
+      rejected: number;
+      suitable: number;
+    }>(`/projects/${projectId}/images/revalidate`),
 };
 
 export const reconstructionAPI = {

@@ -275,3 +275,72 @@ async def get_validation_summary(
     except Exception as e:
         logger.error(f"Error getting validation summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/projects/{project_id}/images/revalidate")
+async def revalidate_images(
+    project_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Re-run forensic validation on all images in a project.
+    Useful for images uploaded before guardrails were implemented.
+    """
+    try:
+        result = await db.execute(
+            select(Image).where(Image.project_id == project_id)
+        )
+        images = result.scalars().all()
+        
+        if not images:
+            return {"message": "No images to validate", "validated": 0, "rejected": 0}
+        
+        validated_count = 0
+        rejected_count = 0
+        
+        for img in images:
+            # Get the actual file path
+            file_path = settings.UPLOAD_DIR / str(project_id) / img.filename
+            
+            if not file_path.exists():
+                logger.warning(f"File not found for revalidation: {file_path}")
+                continue
+            
+            # Extract metadata
+            from services.image_processor import ImageProcessor
+            metadata = ImageProcessor.extract_exif_data(file_path)
+            
+            # Run forensic validation
+            forensic_result = ForensicValidator.validate_forensic_suitability(
+                file_path, metadata
+            )
+            
+            # Update image record
+            img.forensic_score = forensic_result["forensic_score"]
+            img.is_suitable = forensic_result["is_suitable"]
+            img.validation_warnings = [
+                {"severity": w["severity"].value if hasattr(w["severity"], "value") else w["severity"],
+                 "message": w["message"],
+                 "code": w["code"]}
+                for w in forensic_result["warnings"]
+            ]
+            img.validation_flags = forensic_result["flags"]
+            
+            validated_count += 1
+            if not forensic_result["is_suitable"]:
+                rejected_count += 1
+                logger.info(f"Revalidation rejected: {img.filename} (score={forensic_result['forensic_score']})")
+        
+        await db.commit()
+        
+        return {
+            "message": f"Revalidated {validated_count} images",
+            "validated": validated_count,
+            "rejected": rejected_count,
+            "suitable": validated_count - rejected_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error revalidating images: {e}")
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

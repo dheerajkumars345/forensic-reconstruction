@@ -17,6 +17,7 @@ import {
   AlertTitle,
   Tooltip,
   IconButton,
+  Button,
 } from "@mui/material";
 import {
   CloudUpload,
@@ -28,6 +29,7 @@ import {
   CheckCircle,
   Cancel,
   VerifiedUser,
+  Refresh,
 } from "@mui/icons-material";
 import { useDropzone } from "react-dropzone";
 import {
@@ -116,6 +118,20 @@ function ImageUploadPanel({ projectId }: Props) {
     onDrop,
     accept: { "image/*": [".jpg", ".jpeg", ".png", ".tif", ".tiff"] },
   });
+
+  const handleRevalidate = async () => {
+    try {
+      const result = await imagesAPI.revalidate(projectId);
+      alert(
+        `Revalidated ${result.data.validated} images. ${result.data.rejected} rejected, ${result.data.suitable} suitable.`,
+      );
+      await fetchImages();
+      await fetchValidationSummary();
+    } catch (error) {
+      console.error("Revalidation error:", error);
+      alert("Failed to revalidate images");
+    }
+  };
 
   const getWarningIcon = (severity: string) => {
     switch (severity) {
@@ -210,9 +226,27 @@ function ImageUploadPanel({ projectId }: Props) {
               </strong>
             </Typography>
           </Box>
-          <Typography variant="caption" color="text.secondary">
-            {validationSummary.overall_recommendation}
-          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 1,
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              {validationSummary.overall_recommendation}
+            </Typography>
+            <Button
+              size="small"
+              startIcon={<Refresh />}
+              onClick={handleRevalidate}
+              sx={{ fontSize: "0.75rem" }}
+            >
+              Re-validate
+            </Button>
+          </Box>
         </Alert>
       )}
 
