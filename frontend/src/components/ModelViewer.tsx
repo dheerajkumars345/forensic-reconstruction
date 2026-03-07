@@ -656,7 +656,34 @@ function ModelViewer({ projectId }: Props) {
                       colors={pointCloudArrays.colors}
                     />
                   ) : (
-                    <SimulatedPointCloud count={20000} />
+                    <>
+                      <SimulatedPointCloud count={20000} />
+                      {/* Warning overlay for simulated data */}
+                      <Html position={[0, 8, 0]} center>
+                        <Box
+                          sx={{
+                            bgcolor: "rgba(255, 152, 0, 0.9)",
+                            px: 2,
+                            py: 1,
+                            borderRadius: 1,
+                            textAlign: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "#000",
+                              fontSize: "12px",
+                              fontWeight: 700,
+                            }}
+                          >
+                            PREVIEW MODE - NOT REAL DATA
+                          </Typography>
+                          <Typography sx={{ color: "#333", fontSize: "10px" }}>
+                            Click "Generate Model" to create real 3D from images
+                          </Typography>
+                        </Box>
+                      </Html>
+                    </>
                   )}
                 </>
               )}
@@ -695,23 +722,6 @@ function ModelViewer({ projectId }: Props) {
                     );
                   },
                 )}
-
-              {/* Forensic Exhibition Markers */}
-              <ForensicMarker
-                position={[2, -2.5, 3]}
-                text="EXHIBIT 1"
-                color="#ffc107"
-              />
-              <ForensicMarker
-                position={[-5, -2.5, -4]}
-                text="EXHIBIT 2"
-                color="#f44336"
-              />
-              <ForensicMarker
-                position={[6, -2.5, -2]}
-                text="EXHIBIT 3"
-                color="#3f51b5"
-              />
             </Canvas>
           ) : (
             <Box
@@ -763,7 +773,7 @@ function ModelViewer({ projectId }: Props) {
           >
             <Typography
               sx={{
-                color: "#c69749",
+                color: pointCloudArrays ? "#4ade80" : "#ff9800",
                 fontSize: "11px",
                 display: "flex",
                 alignItems: "center",
@@ -771,10 +781,15 @@ function ModelViewer({ projectId }: Props) {
                 fontWeight: 700,
               }}
             >
-              <LocationOn sx={{ fontSize: 14 }} /> SPATIAL DATA VERIFIED
+              <LocationOn sx={{ fontSize: 14 }} />
+              {pointCloudArrays
+                ? `REAL 3D DATA • ${(pointCloudData?.num_points || 0).toLocaleString()} POINTS`
+                : "SIMULATED PREVIEW"}
             </Typography>
             <Typography sx={{ color: "#94a3b8", fontSize: "9px" }}>
-              Digital Forensics Lab | India Grid System
+              {pointCloudArrays
+                ? `From ${images.length} image${images.length !== 1 ? "s" : ""} via Structure from Motion`
+                : "Generate model to see real reconstruction"}
             </Typography>
           </Box>
         </Box>
