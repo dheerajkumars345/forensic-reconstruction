@@ -40,6 +40,7 @@ import {
 
 interface Props {
   projectId: number;
+  demoMode?: boolean;
 }
 
 // 3D Image Label Component (Using HTML for stability)
@@ -217,7 +218,7 @@ function SimulatedPointCloud({ count = 15000 }) {
   );
 }
 
-function ModelViewer({ projectId }: Props) {
+function ModelViewer({ projectId, demoMode = false }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(false);
@@ -322,16 +323,38 @@ function ModelViewer({ projectId }: Props) {
       if (response.data.status === "completed") {
         fetchPointCloudData();
       } else if (response.data.status === "failed") {
-        setError(
-          response.data.error_message ||
-            "Reconstruction failed. Not enough matching features between images.",
-        );
+        if (demoMode) {
+          // Demo mode: Create simulated reconstruction instead of showing error
+          setReconstruction({
+            ...response.data,
+            status: "completed",
+            num_points: 15000,
+            error_message: null,
+          });
+          // Don't set error, allow simulated point cloud to show
+        } else {
+          setError(
+            response.data.error_message ||
+              "Reconstruction failed. Not enough matching features between images.",
+          );
+        }
       }
     } catch (err: any) {
-      const msg =
-        err.response?.data?.detail ||
-        "3D Reconstruction failed. Ensure images have overlapping views.";
-      setError(msg);
+      if (demoMode) {
+        // Demo mode: Create simulated reconstruction on error
+        setReconstruction({
+          id: 0,
+          project_id: projectId,
+          status: "completed",
+          num_points: 15000,
+          num_images_used: images.length,
+        });
+      } else {
+        const msg =
+          err.response?.data?.detail ||
+          "3D Reconstruction failed. Ensure images have overlapping views.";
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
