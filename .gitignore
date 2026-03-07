@@ -1,0 +1,42 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local data
+backend/data/
+*.db
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# PDFs generated during testing
+*.pdf
