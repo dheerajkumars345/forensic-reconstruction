@@ -271,12 +271,12 @@ class ImageResponse(BaseModel):
     gps_longitude: Optional[float]
     date_taken: Optional[datetime]
     uploaded_at: datetime
-    is_processed: bool
-    quality_score: Optional[float]
+    is_processed: bool = False
+    quality_score: Optional[float] = None
     # Forensic validation fields
     forensic_score: Optional[float] = None
-    is_verified: bool = False
-    is_suitable: bool = True
+    is_verified: Optional[bool] = False
+    is_suitable: Optional[bool] = True
     validation_warnings: Optional[List[Dict[str, Any]]] = None
     validation_flags: Optional[Dict[str, bool]] = None
     
