@@ -40,6 +40,7 @@ import {
 
 interface Props {
   projectId: number;
+  demoMode?: boolean;
 }
 
 // 3D Image Label Component (Using HTML for stability)
@@ -217,7 +218,7 @@ function SimulatedPointCloud({ count = 15000 }) {
   );
 }
 
-function ModelViewer({ projectId }: Props) {
+function ModelViewer({ projectId, demoMode = false }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(false);
@@ -322,16 +323,37 @@ function ModelViewer({ projectId }: Props) {
       if (response.data.status === "completed") {
         fetchPointCloudData();
       } else if (response.data.status === "failed") {
-        setError(
-          response.data.error_message ||
-            "Reconstruction failed. Upload overlapping images of the same scene from different angles. Use the test images in backend/photogrammetry_test_images/ for demo.",
-        );
+        if (demoMode) {
+          // Demo mode: Create simulated reconstruction instead of showing error
+          setReconstruction({
+            ...response.data,
+            status: "completed",
+            num_points: 15000,
+            error_message: null,
+          });
+        } else {
+          setError(
+            response.data.error_message ||
+              "Reconstruction failed. Upload overlapping images of the same scene from different angles.",
+          );
+        }
       }
     } catch (err: any) {
-      const msg =
-        err.response?.data?.detail ||
-        "3D Reconstruction failed. Upload overlapping images of the same scene from different angles. Use the test images in backend/photogrammetry_test_images/ for demo.";
-      setError(msg);
+      if (demoMode) {
+        // Demo mode: Create simulated reconstruction on error
+        setReconstruction({
+          id: 0,
+          project_id: projectId,
+          status: "completed",
+          num_points: 15000,
+          num_images_used: images.length,
+        });
+      } else {
+        const msg =
+          err.response?.data?.detail ||
+          "3D Reconstruction failed. Upload overlapping images of the same scene from different angles.";
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -647,7 +669,7 @@ function ModelViewer({ projectId }: Props) {
                 position={[0, -2.5, 0]}
               />
 
-              {/* Point Cloud - Show REAL data only */}
+              {/* Point Cloud - Show real data or simulated in demo mode */}
               {(viewMode === "cloud" || viewMode === "both") && (
                 <>
                   {pointCloudArrays ? (
@@ -655,6 +677,35 @@ function ModelViewer({ projectId }: Props) {
                       positions={pointCloudArrays.positions}
                       colors={pointCloudArrays.colors}
                     />
+                  ) : demoMode ? (
+                    <>
+                      <SimulatedPointCloud count={20000} />
+                      {/* Demo mode indicator */}
+                      <Html position={[0, 8, 0]} center>
+                        <Box
+                          sx={{
+                            bgcolor: "rgba(198, 151, 73, 0.9)",
+                            px: 2,
+                            py: 1,
+                            borderRadius: 1,
+                            textAlign: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "#000",
+                              fontSize: "12px",
+                              fontWeight: 700,
+                            }}
+                          >
+                            DEMO MODE - SIMULATED VIEW
+                          </Typography>
+                          <Typography sx={{ color: "#333", fontSize: "10px" }}>
+                            Using simulated point cloud for demonstration
+                          </Typography>
+                        </Box>
+                      </Html>
+                    </>
                   ) : (
                     <>
                       {/* Info message when no real point cloud data */}
