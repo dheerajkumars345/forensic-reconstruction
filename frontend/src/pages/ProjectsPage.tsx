@@ -19,7 +19,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Add, Folder, Image as ImageIcon } from "@mui/icons-material";
+import { Add, Folder, Image as ImageIcon, Delete } from "@mui/icons-material";
 import { projectsAPI, Project } from "../api/client";
 
 function ProjectsPage() {
@@ -30,6 +30,8 @@ function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [newProject, setNewProject] = useState({
     case_number: "",
     case_title: "",
@@ -73,6 +75,25 @@ function ProjectsPage() {
       console.error("Error creating project:", error);
       alert("Failed to create project");
     }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
+    try {
+      await projectsAPI.delete(projectToDelete.id);
+      setProjects(projects.filter((p) => p.id !== projectToDelete.id));
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      alert("Failed to delete project");
+    }
+  };
+
+  const openDeleteDialog = (project: Project, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setProjectToDelete(project);
+    setDeleteDialogOpen(true);
   };
 
   if (loading) {
@@ -361,18 +382,36 @@ function ProjectsPage() {
                     </Typography>
                   </Box>
                 </CardContent>
-                <CardActions sx={{ p: 2, pt: 0 }}>
+                <CardActions sx={{ p: 2, pt: 0, gap: 1 }}>
                   <Button
                     size="medium"
                     onClick={() => navigate(`/projects/${project.id}`)}
-                    fullWidth
                     variant="contained"
                     sx={{
                       bgcolor: "primary.main",
                       "&:hover": { bgcolor: "primary.dark" },
+                      flex: 1,
                     }}
                   >
                     Open Case
+                  </Button>
+                  <Button
+                    size="medium"
+                    onClick={(e) => openDeleteDialog(project, e)}
+                    variant="outlined"
+                    color="error"
+                    sx={{
+                      minWidth: { xs: 40, sm: "auto" },
+                      px: { xs: 1, sm: 2 },
+                    }}
+                  >
+                    {isMobile ? (
+                      <Delete fontSize="small" />
+                    ) : (
+                      <>
+                        <Delete fontSize="small" sx={{ mr: 0.5 }} /> Delete
+                      </>
+                    )}
                   </Button>
                 </CardActions>
               </Card>
@@ -546,6 +585,48 @@ function ProjectsPage() {
             }}
           >
             Create Case
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Delete color="error" />
+            <Typography variant="h6" fontWeight={600}>
+              Delete Case
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" color="text.secondary">
+            Are you sure you want to delete case{" "}
+            <strong>{projectToDelete?.case_number}</strong>?
+          </Typography>
+          <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+            This action cannot be undone. All evidence, measurements, and
+            reports will be permanently deleted.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            sx={{ color: "text.secondary" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteProject}
+            variant="contained"
+            color="error"
+          >
+            Delete Case
           </Button>
         </DialogActions>
       </Dialog>
