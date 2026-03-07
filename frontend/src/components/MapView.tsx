@@ -10,6 +10,8 @@ import {
   Chip,
   SxProps,
   Theme,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   MapContainer,
@@ -55,6 +57,8 @@ function MapRecenter({ coords }: { coords: [number, number][] }) {
 }
 
 function MapView({ projectId }: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [images, setImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +98,7 @@ function MapView({ projectId }: Props) {
 
   const headerStyle: SxProps<Theme> = {
     background: "linear-gradient(135deg, #1a365d 0%, #2c5282 100%)",
-    p: 3,
+    p: { xs: 2, sm: 3 },
     color: "white",
   };
 
@@ -112,12 +116,18 @@ function MapView({ projectId }: Props) {
       {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
       {/* @ts-ignore - MUI sx prop type complexity */}
       <Box sx={headerStyle}>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box display="flex" alignItems="center" gap={2}>
+        <Box
+          display="flex"
+          flexDirection={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          gap={{ xs: 2, sm: 0 }}
+        >
+          <Box display="flex" alignItems="center" gap={{ xs: 1.5, sm: 2 }}>
             <Box
               sx={{
-                width: 48,
-                height: 48,
+                width: { xs: 40, sm: 48 },
+                height: { xs: 40, sm: 48 },
                 borderRadius: "50%",
                 bgcolor: "rgba(198, 151, 73, 0.2)",
                 display: "flex",
@@ -125,21 +135,31 @@ function MapView({ projectId }: Props) {
                 justifyContent: "center",
               }}
             >
-              <Satellite sx={{ color: "#c69749", fontSize: 24 }} />
+              <Satellite
+                sx={{ color: "#c69749", fontSize: { xs: 20, sm: 24 } }}
+              />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight={700}>
-                Satellite & GPS View
+              <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700}>
+                {isMobile ? "GPS View" : "Satellite & GPS View"}
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.85 }}>
+              <Typography
+                variant="body2"
+                sx={{ opacity: 0.85, display: { xs: "none", sm: "block" } }}
+              >
                 Geospatial visualization of evidence locations
               </Typography>
             </Box>
           </Box>
-          <Box display="flex" alignItems="center" gap={2}>
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={{ xs: 1, sm: 2 }}
+            flexWrap="wrap"
+          >
             <Chip
-              icon={<GpsFixed sx={{ fontSize: 16 }} />}
-              label={`${markers.length} GPS Points`}
+              icon={<GpsFixed sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+              label={isMobile ? markers.length : `${markers.length} GPS Points`}
               size="small"
               color="success"
             />
@@ -149,12 +169,19 @@ function MapView({ projectId }: Props) {
                   checked={showMacro}
                   onChange={(e) => setShowMacro(e.target.checked)}
                   color="error"
+                  size={isMobile ? "small" : "medium"}
                 />
               }
               label={
                 <Box display="flex" alignItems="center" gap={0.5}>
-                  <Bloodtype sx={{ color: "#fca5a5", fontSize: 18 }} />
-                  <Typography variant="caption" color="error">
+                  <Bloodtype
+                    sx={{ color: "#fca5a5", fontSize: { xs: 16, sm: 18 } }}
+                  />
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ display: { xs: "none", sm: "block" } }}
+                  >
                     Blood Spatter Analysis
                   </Typography>
                 </Box>
@@ -164,11 +191,11 @@ function MapView({ projectId }: Props) {
         </Box>
       </Box>
 
-      <Box p={3}>
+      <Box p={{ xs: 2, sm: 3 }}>
         {loading ? (
           <Box
             sx={{
-              height: 500,
+              height: { xs: 300, sm: 400, md: 500 },
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -183,7 +210,7 @@ function MapView({ projectId }: Props) {
         ) : markers.length === 0 ? (
           <Box
             sx={{
-              height: 500,
+              height: { xs: 300, sm: 400, md: 500 },
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -193,12 +220,13 @@ function MapView({ projectId }: Props) {
               borderColor: "divider",
               flexDirection: "column",
               gap: 2,
+              p: 2,
             }}
           >
             <Box
               sx={{
-                width: 80,
-                height: 80,
+                width: { xs: 60, sm: 80 },
+                height: { xs: 60, sm: 80 },
                 borderRadius: "50%",
                 bgcolor: "rgba(26, 54, 93, 0.08)",
                 display: "flex",
@@ -206,9 +234,16 @@ function MapView({ projectId }: Props) {
                 justifyContent: "center",
               }}
             >
-              <LocationOn sx={{ fontSize: 40, color: "#94a3b8" }} />
+              <LocationOn
+                sx={{ fontSize: { xs: 30, sm: 40 }, color: "#94a3b8" }}
+              />
             </Box>
-            <Typography variant="h6" fontWeight={600} color="text.secondary">
+            <Typography
+              variant={isMobile ? "body1" : "h6"}
+              fontWeight={600}
+              color="text.secondary"
+              textAlign="center"
+            >
               No GPS Metadata Found
             </Typography>
             <Typography
@@ -216,14 +251,15 @@ function MapView({ projectId }: Props) {
               color="text.secondary"
               sx={{ maxWidth: 400, textAlign: "center" }}
             >
-              Ensure uploaded images contain EXIF GPS tags or set a manual
-              project location.
+              {isMobile
+                ? "Upload images with GPS tags or set manual location."
+                : "Ensure uploaded images contain EXIF GPS tags or set a manual project location."}
             </Typography>
           </Box>
         ) : (
           <Box
             sx={{
-              height: 500,
+              height: { xs: 300, sm: 400, md: 500 },
               borderRadius: 2,
               overflow: "hidden",
               border: "1px solid",

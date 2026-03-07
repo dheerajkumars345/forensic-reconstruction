@@ -80,6 +80,45 @@ button {
   border-radius: 8px;
 }
 
+/* Mobile viewport fixes */
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+/* Prevent horizontal scroll on mobile */
+body {
+  overflow-x: hidden;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+
+  /* Touch-friendly targets */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  /* Better scrolling on iOS */
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 601px) and (max-width: 960px) {
+  body {
+    font-size: 15px;
+  }
+}
+
 /* Loading shimmer effect for cards */
 @keyframes shimmer {
   0% {

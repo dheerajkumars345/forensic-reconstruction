@@ -12,6 +12,8 @@ import {
   ListItemText,
   Divider,
   Chip,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   PictureAsPdf,
@@ -31,6 +33,8 @@ interface Props {
 }
 
 function ReportPanel({ projectId, project }: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
@@ -68,7 +72,7 @@ function ReportPanel({ projectId, project }: Props) {
     <Paper
       elevation={0}
       sx={{
-        borderRadius: 3,
+        borderRadius: { xs: 2, sm: 3 },
         border: "1px solid",
         borderColor: "divider",
         overflow: "hidden",
@@ -78,68 +82,91 @@ function ReportPanel({ projectId, project }: Props) {
       <Box
         sx={{
           background: "linear-gradient(135deg, #1a365d 0%, #2c5282 100%)",
-          p: 4,
+          p: { xs: 2.5, sm: 4 },
           color: "white",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: { xs: 1.5, sm: 2 },
+            mb: 2,
+          }}
+        >
           <Box
             sx={{
-              width: 48,
-              height: 48,
+              width: { xs: 40, sm: 48 },
+              height: { xs: 40, sm: 48 },
               borderRadius: "50%",
               bgcolor: "rgba(198, 151, 73, 0.2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            <Gavel sx={{ color: "#c69749", fontSize: 24 }} />
+            <Gavel sx={{ color: "#c69749", fontSize: { xs: 20, sm: 24 } }} />
           </Box>
           <Box>
-            <Typography variant="h5" fontWeight={700}>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700}>
               Forensic Report Generation
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.85 }}>
+            <Typography
+              variant="body2"
+              sx={{ opacity: 0.85, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+            >
               Court-admissible documentation with chain of custody
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Chip
             icon={
-              <Security sx={{ color: "#86efac !important", fontSize: 16 }} />
+              <Security
+                sx={{
+                  color: "#86efac !important",
+                  fontSize: { xs: 14, sm: 16 },
+                }}
+              />
             }
-            label="Section 65B Compliant"
+            label="Section 65B"
             size="small"
             sx={{
               bgcolor: "rgba(45, 106, 79, 0.2)",
               color: "#86efac",
               border: "1px solid rgba(134, 239, 172, 0.3)",
               fontWeight: 600,
+              fontSize: { xs: "0.65rem", sm: "0.75rem" },
             }}
           />
           <Chip
             icon={
-              <CheckCircle sx={{ color: "#93c5fd !important", fontSize: 16 }} />
+              <CheckCircle
+                sx={{
+                  color: "#93c5fd !important",
+                  fontSize: { xs: 14, sm: 16 },
+                }}
+              />
             }
-            label="SHA-256 Verified"
+            label="SHA-256"
             size="small"
             sx={{
               bgcolor: "rgba(147, 197, 253, 0.15)",
               color: "#93c5fd",
               border: "1px solid rgba(147, 197, 253, 0.3)",
               fontWeight: 600,
+              fontSize: { xs: "0.65rem", sm: "0.75rem" },
             }}
           />
         </Box>
       </Box>
 
-      <Box sx={{ p: 4 }}>
+      <Box sx={{ p: { xs: 2.5, sm: 4 } }}>
         <Box
           sx={{
             display: "flex",
-            gap: 4,
+            gap: { xs: 2, sm: 4 },
             flexDirection: { xs: "column", md: "row" },
           }}
         >

@@ -12,6 +12,8 @@ import {
   CircularProgress,
   Alert,
   Avatar,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Add,
@@ -31,6 +33,8 @@ interface Props {
 }
 
 function MeasurementsPanel({ projectId, onTabChange }: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +72,7 @@ function MeasurementsPanel({ projectId, onTabChange }: Props) {
     <Paper
       elevation={0}
       sx={{
-        borderRadius: 3,
+        borderRadius: { xs: 2, sm: 3 },
         border: "1px solid",
         borderColor: "divider",
         overflow: "hidden",
@@ -78,32 +82,46 @@ function MeasurementsPanel({ projectId, onTabChange }: Props) {
       <Box
         sx={{
           background: "linear-gradient(135deg, #1a365d 0%, #2c5282 100%)",
-          p: 4,
+          p: { xs: 2.5, sm: 4 },
           color: "white",
           display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "stretch", sm: "center" },
+          gap: { xs: 2, sm: 0 },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: { xs: 1.5, sm: 2 },
+          }}
+        >
           <Box
             sx={{
-              width: 48,
-              height: 48,
+              width: { xs: 40, sm: 48 },
+              height: { xs: 40, sm: 48 },
               borderRadius: "50%",
               bgcolor: "rgba(198, 151, 73, 0.2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            <Straighten sx={{ color: "#c69749", fontSize: 24 }} />
+            <Straighten
+              sx={{ color: "#c69749", fontSize: { xs: 20, sm: 24 } }}
+            />
           </Box>
           <Box>
-            <Typography variant="h5" fontWeight={700}>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700}>
               Forensic Measurements
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.85 }}>
+            <Typography
+              variant="body2"
+              sx={{ opacity: 0.85, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+            >
               Photogrammetric calculations with statistical confidence
             </Typography>
           </Box>
@@ -111,6 +129,7 @@ function MeasurementsPanel({ projectId, onTabChange }: Props) {
         <Button
           variant="contained"
           startIcon={<Add />}
+          fullWidth={isMobile}
           onClick={() =>
             onTabChange
               ? onTabChange(1)
@@ -120,7 +139,7 @@ function MeasurementsPanel({ projectId, onTabChange }: Props) {
             bgcolor: "#c69749",
             color: "#0d1b2a",
             fontWeight: 700,
-            px: 3,
+            px: { xs: 2, sm: 3 },
             "&:hover": { bgcolor: "#d4a85a" },
           }}
         >
@@ -128,43 +147,58 @@ function MeasurementsPanel({ projectId, onTabChange }: Props) {
         </Button>
       </Box>
 
-      <Box sx={{ p: 4 }}>
+      <Box sx={{ p: { xs: 2.5, sm: 4 } }}>
         {/* Accuracy Info */}
         <Box
           sx={{
             display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
             gap: 2,
             mb: 3,
-            p: 2.5,
+            p: { xs: 2, sm: 2.5 },
             bgcolor: "rgba(45, 106, 79, 0.08)",
             borderRadius: 2,
             border: "1px solid rgba(45, 106, 79, 0.2)",
           }}
         >
           <Avatar
-            sx={{ bgcolor: "rgba(45, 106, 79, 0.15)", width: 44, height: 44 }}
+            sx={{
+              bgcolor: "rgba(45, 106, 79, 0.15)",
+              width: { xs: 40, sm: 44 },
+              height: { xs: 40, sm: 44 },
+              display: { xs: "none", sm: "flex" },
+            }}
           >
             <Security sx={{ color: "#2d6a4f" }} />
           </Avatar>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" fontWeight={700} color="#2d6a4f">
+            <Typography
+              variant="subtitle2"
+              fontWeight={700}
+              color="#2d6a4f"
+              sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+            >
               Metric Accuracy & Spatial Integrity Verified
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
+            >
               Statistical confidence analysis suggests a <b>98.4%</b> match
               between manual measurements and photogrammetric spatial data. RMS
               project error is within standard forensic bounds (±3.12cm).
             </Typography>
           </Box>
           <Chip
-            icon={<Analytics sx={{ fontSize: 16 }} />}
-            label="98.4% Accuracy"
+            icon={<Analytics sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+            label="98.4%"
             size="small"
             sx={{
               bgcolor: "rgba(45, 106, 79, 0.15)",
               color: "#2d6a4f",
               fontWeight: 600,
-              alignSelf: "center",
+              alignSelf: { xs: "flex-start", sm: "center" },
             }}
           />
         </Box>

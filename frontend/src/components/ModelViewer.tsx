@@ -10,6 +10,8 @@ import {
   Chip,
   ToggleButton,
   ToggleButtonGroup,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   ViewInAr,
@@ -189,6 +191,8 @@ function ForensicPointCloud({ count = 15000 }) {
 }
 
 function ModelViewer({ projectId }: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(false);
   const [reconstruction, setReconstruction] = useState<any>(null);
   const [images, setImages] = useState<any[]>([]);
@@ -247,53 +251,82 @@ function ModelViewer({ projectId }: Props) {
       <Box
         sx={{
           background: "linear-gradient(135deg, #1a365d 0%, #2c5282 100%)",
-          p: 3,
+          p: { xs: 2, sm: 3 },
           color: "white",
           display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "stretch", sm: "center" },
+          gap: { xs: 2, sm: 0 },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: { xs: 1.5, sm: 2 },
+          }}
+        >
           <Box
             sx={{
-              width: 48,
-              height: 48,
+              width: { xs: 40, sm: 48 },
+              height: { xs: 40, sm: 48 },
               borderRadius: "50%",
               bgcolor: "rgba(198, 151, 73, 0.2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            <ViewInAr sx={{ color: "#c69749", fontSize: 24 }} />
+            <ViewInAr sx={{ color: "#c69749", fontSize: { xs: 20, sm: 24 } }} />
           </Box>
           <Box>
-            <Typography variant="h5" fontWeight={700}>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight={700}>
               Forensic 3D Scenography
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.85 }}>
+            <Typography
+              variant="body2"
+              sx={{ opacity: 0.85, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+            >
               Projected evidence from {images.length} forensic captures
             </Typography>
           </Box>
         </Box>
-        <Box display="flex" gap={2} alignItems="center">
+        <Box
+          display="flex"
+          gap={{ xs: 1, sm: 2 }}
+          alignItems="center"
+          flexWrap="wrap"
+          justifyContent={{ xs: "space-between", sm: "flex-end" }}
+        >
           <ToggleButtonGroup
             value={viewMode}
             exclusive
             onChange={(_, val) => val && setViewMode(val)}
             size="small"
+            sx={{
+              "& .MuiToggleButton-root": {
+                px: { xs: 1, sm: 2 },
+                fontSize: { xs: "0.7rem", sm: "0.8125rem" },
+              },
+            }}
           >
-            <ToggleButton value="cloud">Cloud</ToggleButton>
-            <ToggleButton value="images">Photos</ToggleButton>
+            <ToggleButton value="cloud">
+              {isMobile ? "Pts" : "Cloud"}
+            </ToggleButton>
+            <ToggleButton value="images">
+              {isMobile ? "Img" : "Photos"}
+            </ToggleButton>
             <ToggleButton value="both">Both</ToggleButton>
           </ToggleButtonGroup>
           <Button
             variant="contained"
             color="secondary"
+            size={isMobile ? "small" : "medium"}
             startIcon={
               loading ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress size={isMobile ? 16 : 20} color="inherit" />
               ) : (
                 <PlayArrow />
               )
@@ -310,7 +343,7 @@ function ModelViewer({ projectId }: Props) {
         </Box>
       </Box>
 
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: { xs: 2, sm: 3 } }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -318,35 +351,37 @@ function ModelViewer({ projectId }: Props) {
         )}
 
         {reconstruction && (
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: { xs: 2, sm: 3 } }}>
             <Box
               sx={{
                 display: "flex",
-                gap: 2,
+                gap: { xs: 1, sm: 2 },
                 mb: 2,
                 flexWrap: "wrap",
                 alignItems: "center",
               }}
             >
               <Chip
-                label={`±${reconstruction.estimated_accuracy_cm ?? "N/A"}cm Spatial Error`}
+                label={`±${reconstruction.estimated_accuracy_cm ?? "N/A"}cm`}
                 size="small"
                 sx={{
                   bgcolor: "rgba(45, 106, 79, 0.15)",
                   color: "#2d6a4f",
                   fontWeight: 700,
+                  fontSize: { xs: "0.7rem", sm: "0.8125rem" },
                 }}
               />
               <Chip
-                label={`${(reconstruction.num_points ?? 0).toLocaleString()} Points`}
+                label={`${(reconstruction.num_points ?? 0).toLocaleString()} Pts`}
                 size="small"
                 sx={{
                   bgcolor: "#1a365d",
                   color: "white",
                   fontWeight: 600,
+                  fontSize: { xs: "0.7rem", sm: "0.8125rem" },
                 }}
               />
-              {reconstruction.orthomosaic_path && (
+              {reconstruction.orthomosaic_path && !isMobile && (
                 <Button
                   size="small"
                   variant="outlined"
@@ -429,7 +464,7 @@ function ModelViewer({ projectId }: Props) {
 
         <Box
           sx={{
-            height: 600,
+            height: { xs: 350, sm: 450, md: 600 },
             bgcolor: "#0d1b2a",
             borderRadius: 2,
             overflow: "hidden",

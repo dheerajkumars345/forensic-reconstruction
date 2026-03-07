@@ -13,6 +13,8 @@ import {
   Chip,
   CircularProgress,
   Avatar,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Home,
@@ -50,7 +52,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`project-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: { xs: 1.5, sm: 3 } }}>{children}</Box>}
     </div>
   );
 }
@@ -58,6 +60,9 @@ function TabPanel(props: TabPanelProps) {
 function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState(0);
@@ -107,15 +112,15 @@ function ProjectDetailPage() {
         sx={{
           background: "linear-gradient(135deg, #1a365d 0%, #2c5282 100%)",
           color: "white",
-          pt: 2,
-          pb: 4,
+          pt: { xs: 1.5, sm: 2 },
+          pb: { xs: 3, sm: 4 },
         }}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
           {/* Breadcrumbs */}
           <Breadcrumbs
             sx={{
-              mb: 3,
+              mb: { xs: 2, sm: 3 },
               "& .MuiBreadcrumbs-separator": { color: "rgba(255,255,255,0.5)" },
             }}
           >
@@ -126,14 +131,21 @@ function ProjectDetailPage() {
                 alignItems: "center",
                 cursor: "pointer",
                 color: "rgba(255,255,255,0.7)",
+                fontSize: { xs: "0.85rem", sm: "1rem" },
                 "&:hover": { color: "#c69749" },
               }}
               onClick={() => navigate("/projects")}
             >
-              <Home sx={{ mr: 0.5, fontSize: 18 }} />
+              <Home sx={{ mr: 0.5, fontSize: { xs: 16, sm: 18 } }} />
               Cases
             </Link>
-            <Typography sx={{ color: "#c69749", fontWeight: 600 }}>
+            <Typography
+              sx={{
+                color: "#c69749",
+                fontWeight: 600,
+                fontSize: { xs: "0.85rem", sm: "1rem" },
+              }}
+            >
               {project.case_number}
             </Typography>
           </Breadcrumbs>
@@ -142,13 +154,21 @@ function ProjectDetailPage() {
           <Box
             sx={{
               display: "flex",
+              flexDirection: { xs: "column", md: "row" },
               justifyContent: "space-between",
-              alignItems: "start",
+              alignItems: { xs: "flex-start", md: "start" },
+              gap: { xs: 2, md: 0 },
             }}
           >
-            <Box>
+            <Box sx={{ width: "100%" }}>
               <Box
-                sx={{ display: "flex", gap: 1.5, mb: 2, alignItems: "center" }}
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  mb: 2,
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
               >
                 <Chip
                   label={project.case_number}
@@ -157,7 +177,7 @@ function ProjectDetailPage() {
                     color: "#c69749",
                     fontWeight: 700,
                     border: "1px solid rgba(198, 151, 73, 0.4)",
-                    fontSize: "0.85rem",
+                    fontSize: { xs: "0.75rem", sm: "0.85rem" },
                   }}
                 />
                 <Chip
@@ -173,19 +193,29 @@ function ProjectDetailPage() {
                         ? "#86efac"
                         : "rgba(255,255,255,0.9)",
                     fontWeight: 600,
+                    fontSize: { xs: "0.65rem", sm: "0.75rem" },
                   }}
                 />
               </Box>
               <Typography
-                variant="h4"
-                sx={{ fontWeight: 700, mb: 1, maxWidth: 600 }}
+                variant={isMobile ? "h5" : "h4"}
+                sx={{
+                  fontWeight: 700,
+                  mb: 1,
+                  maxWidth: { xs: "100%", md: 600 },
+                }}
               >
                 {project.case_title}
               </Typography>
               {project.description && (
                 <Typography
                   variant="body1"
-                  sx={{ opacity: 0.85, maxWidth: 600, mb: 2 }}
+                  sx={{
+                    opacity: 0.85,
+                    maxWidth: { xs: "100%", md: 600 },
+                    mb: 2,
+                    fontSize: { xs: "0.9rem", sm: "1rem" },
+                  }}
                 >
                   {project.description}
                 </Typography>
@@ -194,87 +224,173 @@ function ProjectDetailPage() {
           </Box>
 
           {/* Meta Info Cards */}
-          <Box sx={{ display: "flex", gap: 4, mt: 3, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr 1fr",
+                sm: "repeat(auto-fit, minmax(150px, 1fr))",
+              },
+              gap: { xs: 2, sm: 3, md: 4 },
+              mt: 3,
+            }}
+          >
             {project.location && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: { xs: 1, sm: 1.5 },
+                }}
+              >
                 <Avatar
                   sx={{
                     bgcolor: "rgba(255,255,255,0.1)",
-                    width: 36,
-                    height: 36,
+                    width: { xs: 32, sm: 36 },
+                    height: { xs: 32, sm: 36 },
                   }}
                 >
-                  <LocationOn sx={{ fontSize: 18 }} />
+                  <LocationOn sx={{ fontSize: { xs: 16, sm: 18 } }} />
                 </Avatar>
-                <Box>
+                <Box sx={{ minWidth: 0 }}>
                   <Typography
                     variant="caption"
-                    sx={{ opacity: 0.7, display: "block" }}
+                    sx={{
+                      opacity: 0.7,
+                      display: "block",
+                      fontSize: { xs: "0.65rem", sm: "0.75rem" },
+                    }}
                   >
                     Location
                   </Typography>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    sx={{
+                      fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     {project.location}
                   </Typography>
                 </Box>
               </Box>
             )}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1, sm: 1.5 },
+              }}
+            >
               <Avatar
-                sx={{ bgcolor: "rgba(255,255,255,0.1)", width: 36, height: 36 }}
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.1)",
+                  width: { xs: 32, sm: 36 },
+                  height: { xs: 32, sm: 36 },
+                }}
               >
-                <Person sx={{ fontSize: 18 }} />
+                <Person sx={{ fontSize: { xs: 16, sm: 18 } }} />
               </Avatar>
-              <Box>
+              <Box sx={{ minWidth: 0 }}>
                 <Typography
                   variant="caption"
-                  sx={{ opacity: 0.7, display: "block" }}
+                  sx={{
+                    opacity: 0.7,
+                    display: "block",
+                    fontSize: { xs: "0.65rem", sm: "0.75rem" },
+                  }}
                 >
                   Examiner
                 </Typography>
-                <Typography variant="body2" fontWeight={500}>
+                <Typography
+                  variant="body2"
+                  fontWeight={500}
+                  sx={{
+                    fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {project.examiner_name}
                 </Typography>
               </Box>
             </Box>
             {project.laboratory && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: { xs: 1, sm: 1.5 },
+                }}
+              >
                 <Avatar
                   sx={{
                     bgcolor: "rgba(255,255,255,0.1)",
-                    width: 36,
-                    height: 36,
+                    width: { xs: 32, sm: 36 },
+                    height: { xs: 32, sm: 36 },
                   }}
                 >
-                  <Science sx={{ fontSize: 18 }} />
+                  <Science sx={{ fontSize: { xs: 16, sm: 18 } }} />
                 </Avatar>
-                <Box>
+                <Box sx={{ minWidth: 0 }}>
                   <Typography
                     variant="caption"
-                    sx={{ opacity: 0.7, display: "block" }}
+                    sx={{
+                      opacity: 0.7,
+                      display: "block",
+                      fontSize: { xs: "0.65rem", sm: "0.75rem" },
+                    }}
                   >
                     Laboratory
                   </Typography>
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    sx={{
+                      fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     {project.laboratory}
                   </Typography>
                 </Box>
               </Box>
             )}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1, sm: 1.5 },
+              }}
+            >
               <Avatar
-                sx={{ bgcolor: "rgba(255,255,255,0.1)", width: 36, height: 36 }}
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.1)",
+                  width: { xs: 32, sm: 36 },
+                  height: { xs: 32, sm: 36 },
+                }}
               >
-                <CalendarMonth sx={{ fontSize: 18 }} />
+                <CalendarMonth sx={{ fontSize: { xs: 16, sm: 18 } }} />
               </Avatar>
-              <Box>
+              <Box sx={{ minWidth: 0 }}>
                 <Typography
                   variant="caption"
-                  sx={{ opacity: 0.7, display: "block" }}
+                  sx={{
+                    opacity: 0.7,
+                    display: "block",
+                    fontSize: { xs: "0.65rem", sm: "0.75rem" },
+                  }}
                 >
                   Created
                 </Typography>
-                <Typography variant="body2" fontWeight={500}>
+                <Typography
+                  variant="body2"
+                  fontWeight={500}
+                  sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+                >
                   {new Date(project.created_at).toLocaleDateString("en-IN", {
                     day: "2-digit",
                     month: "short",
@@ -287,12 +403,12 @@ function ProjectDetailPage() {
         </Container>
       </Box>
 
-      <Container maxWidth="xl" sx={{ mt: -2, pb: 4 }}>
+      <Container maxWidth="xl" sx={{ mt: -2, pb: 4, px: { xs: 2, sm: 3 } }}>
         {/* Tabs */}
         <Paper
           elevation={0}
           sx={{
-            mb: 3,
+            mb: { xs: 2, sm: 3 },
             borderRadius: 2,
             border: "1px solid",
             borderColor: "divider",
@@ -302,49 +418,57 @@ function ProjectDetailPage() {
           <Tabs
             value={currentTab}
             onChange={(_, newValue) => setCurrentTab(newValue)}
+            variant={isMobile ? "scrollable" : "standard"}
+            scrollButtons={isMobile ? "auto" : false}
+            allowScrollButtonsMobile
             sx={{
               bgcolor: "white",
               "& .MuiTab-root": {
-                py: 2,
-                px: 3,
-                minHeight: 64,
+                py: { xs: 1.5, sm: 2 },
+                px: { xs: 1.5, sm: 3 },
+                minHeight: { xs: 56, sm: 64 },
+                minWidth: { xs: "auto", sm: 120 },
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
                 "&.Mui-selected": { bgcolor: "rgba(26, 54, 93, 0.04)" },
               },
               "& .MuiTabs-indicator": {
                 height: 3,
                 borderRadius: "3px 3px 0 0",
               },
+              "& .MuiTabs-scrollButtons": {
+                color: "primary.main",
+              },
             }}
           >
             <Tab
-              icon={<CloudUpload />}
-              label="Evidence Images"
+              icon={<CloudUpload sx={{ fontSize: { xs: 18, sm: 24 } }} />}
+              label={isMobile ? "Images" : "Evidence Images"}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: { xs: 0.5, sm: 1 } }}
             />
             <Tab
-              icon={<ViewInAr />}
-              label="3D Reconstruction"
+              icon={<ViewInAr sx={{ fontSize: { xs: 18, sm: 24 } }} />}
+              label={isMobile ? "3D" : "3D Reconstruction"}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: { xs: 0.5, sm: 1 } }}
             />
             <Tab
-              icon={<Map />}
-              label="GPS Mapping"
+              icon={<Map sx={{ fontSize: { xs: 18, sm: 24 } }} />}
+              label={isMobile ? "GPS" : "GPS Mapping"}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: { xs: 0.5, sm: 1 } }}
             />
             <Tab
-              icon={<Straighten />}
-              label="Measurements"
+              icon={<Straighten sx={{ fontSize: { xs: 18, sm: 24 } }} />}
+              label={isMobile ? "Measure" : "Measurements"}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: { xs: 0.5, sm: 1 } }}
             />
             <Tab
-              icon={<Description />}
-              label="Generate Report"
+              icon={<Description sx={{ fontSize: { xs: 18, sm: 24 } }} />}
+              label={isMobile ? "Report" : "Generate Report"}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: { xs: 0.5, sm: 1 } }}
             />
           </Tabs>
         </Paper>

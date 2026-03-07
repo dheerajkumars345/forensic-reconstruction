@@ -16,12 +16,17 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { Add, Folder, Image as ImageIcon } from "@mui/icons-material";
 import { projectsAPI, Project } from "../api/client";
 
 function ProjectsPage() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -81,26 +86,28 @@ function ProjectsPage() {
   return (
     <Box>
       {/* Hero Section */}
-      <div
-        style={{
+      <Box
+        sx={{
           backgroundColor: "#1a365d",
           color: "white",
-          paddingTop: 40,
-          paddingBottom: 40,
-          marginBottom: 32,
+          pt: { xs: 3, sm: 5 },
+          pb: { xs: 3, sm: 5 },
+          mb: { xs: 2, sm: 4 },
         }}
       >
         <Container maxWidth="xl">
-          <div
-            style={{
+          <Box
+            sx={{
               display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: { xs: "stretch", sm: "center" },
+              gap: { xs: 2, sm: 0 },
             }}
           >
-            <div>
+            <Box sx={{ textAlign: { xs: "center", sm: "left" } }}>
               <Typography
-                variant="h3"
+                variant={isMobile ? "h4" : "h3"}
                 sx={{
                   fontWeight: 700,
                   mb: 1,
@@ -109,21 +116,30 @@ function ProjectsPage() {
               >
                 Case Management
               </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.85, maxWidth: 500 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  opacity: 0.85,
+                  maxWidth: 500,
+                  mx: { xs: "auto", sm: 0 },
+                  fontSize: { xs: "0.9rem", sm: "1rem" },
+                }}
+              >
                 Manage forensic crime scene reconstruction projects with full
                 chain of custody tracking
               </Typography>
-            </div>
+            </Box>
             <Button
               variant="contained"
               startIcon={<Add />}
               onClick={() => setCreateDialogOpen(true)}
-              size="large"
+              size={isMobile ? "medium" : "large"}
+              fullWidth={isMobile}
               sx={{
                 bgcolor: "#c69749",
                 color: "#0d1b2a",
-                px: 4,
-                py: 1.5,
+                px: { xs: 3, sm: 4 },
+                py: { xs: 1.25, sm: 1.5 },
                 fontWeight: 700,
                 "&:hover": {
                   bgcolor: "#d4a85a",
@@ -132,41 +148,50 @@ function ProjectsPage() {
             >
               New Case
             </Button>
-          </div>
+          </Box>
         </Container>
-      </div>
+      </Box>
 
-      <Container maxWidth="xl" sx={{ pb: 6 }}>
+      <Container maxWidth="xl" sx={{ pb: { xs: 3, sm: 6 } }}>
         {/* Stats Bar */}
         <Box
           sx={{
             display: "flex",
-            gap: 3,
-            mb: 4,
-            p: 2.5,
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 2, sm: 3 },
+            mb: { xs: 3, sm: 4 },
+            p: { xs: 2, sm: 2.5 },
             bgcolor: "white",
             borderRadius: 2,
             border: "1px solid",
             borderColor: "divider",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}
+          >
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: { xs: 36, sm: 40 },
+                height: { xs: 36, sm: 40 },
                 borderRadius: 1,
                 bgcolor: "primary.main",
                 color: "white",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                flexShrink: 0,
               }}
             >
-              <Folder />
+              <Folder sx={{ fontSize: { xs: 20, sm: 24 } }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight={700} color="primary.main">
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                color="primary.main"
+                sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }}
+              >
                 {projects.length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -176,30 +201,39 @@ function ProjectsPage() {
           </Box>
           <Box
             sx={{
-              borderLeft: "1px solid",
+              borderLeft: { xs: "none", sm: "1px solid" },
+              borderTop: { xs: "1px solid", sm: "none" },
               borderColor: "divider",
-              pl: 3,
+              pl: { xs: 0, sm: 3 },
+              pt: { xs: 2, sm: 0 },
               display: "flex",
               alignItems: "center",
               gap: 1.5,
+              flex: 1,
             }}
           >
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: { xs: 36, sm: 40 },
+                height: { xs: 36, sm: 40 },
                 borderRadius: 1,
                 bgcolor: "success.main",
                 color: "white",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                flexShrink: 0,
               }}
             >
-              <ImageIcon />
+              <ImageIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
             </Box>
             <Box>
-              <Typography variant="h5" fontWeight={700} color="success.main">
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                color="success.main"
+                sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }}
+              >
                 {projects.reduce((acc, p) => acc + (p.image_count || 0), 0)}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -382,8 +416,9 @@ function ProjectsPage() {
         onClose={() => setCreateDialogOpen(false)}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
-          sx: { borderRadius: 3 },
+          sx: { borderRadius: isMobile ? 0 : 3 },
         }}
       >
         <DialogTitle
@@ -402,7 +437,12 @@ function ProjectsPage() {
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <Box
-            sx={{ display: "flex", flexDirection: "column", gap: 2.5, mt: 1 }}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: { xs: 2, sm: 2.5 },
+              mt: 1,
+            }}
           >
             <TextField
               label="Case Number"
@@ -475,9 +515,16 @@ function ProjectsPage() {
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, gap: 1 }}>
+        <DialogActions
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            gap: 1,
+            flexDirection: { xs: "column-reverse", sm: "row" },
+          }}
+        >
           <Button
             onClick={() => setCreateDialogOpen(false)}
+            fullWidth={isMobile}
             sx={{ color: "text.secondary" }}
           >
             Cancel
@@ -485,6 +532,7 @@ function ProjectsPage() {
           <Button
             onClick={handleCreateProject}
             variant="contained"
+            fullWidth={isMobile}
             disabled={
               !newProject.case_number ||
               !newProject.case_title ||

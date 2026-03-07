@@ -11,6 +11,8 @@ import {
   Chip,
   Paper,
   LinearProgress,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { CloudUpload, PhotoLibrary, Verified } from "@mui/icons-material";
 import { useDropzone } from "react-dropzone";
@@ -21,6 +23,8 @@ interface Props {
 }
 
 function ImageUploadPanel({ projectId }: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState<any[]>([]);
 
@@ -68,23 +72,27 @@ function ImageUploadPanel({ projectId }: Props) {
     <Paper
       elevation={0}
       sx={{
-        p: 4,
-        borderRadius: 3,
+        p: { xs: 2, sm: 4 },
+        borderRadius: { xs: 2, sm: 3 },
         border: "1px solid",
         borderColor: "divider",
       }}
     >
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 2.5, sm: 4 } }}>
         <Typography
-          variant="h5"
+          variant={isMobile ? "h6" : "h5"}
           fontWeight={600}
           color="primary.main"
           gutterBottom
         >
           Evidence Image Upload
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+        >
           Upload crime scene photographs for photogrammetric analysis and 3D
           reconstruction
         </Typography>
@@ -96,12 +104,12 @@ function ImageUploadPanel({ projectId }: Props) {
         sx={{
           border: "2px dashed",
           borderColor: isDragActive ? "primary.main" : "divider",
-          borderRadius: 3,
-          p: 6,
+          borderRadius: { xs: 2, sm: 3 },
+          p: { xs: 3, sm: 6 },
           textAlign: "center",
           bgcolor: isDragActive ? "rgba(26, 54, 93, 0.04)" : "rgba(0,0,0,0.01)",
           cursor: "pointer",
-          mb: 4,
+          mb: { xs: 3, sm: 4 },
           transition: "all 0.2s ease",
           "&:hover": {
             borderColor: "primary.light",
@@ -112,8 +120,12 @@ function ImageUploadPanel({ projectId }: Props) {
         <input {...getInputProps()} />
         {uploading ? (
           <Box>
-            <CircularProgress size={48} sx={{ mb: 2 }} />
-            <Typography variant="body1" color="text.secondary">
+            <CircularProgress size={isMobile ? 36 : 48} sx={{ mb: 2 }} />
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
+            >
               Processing evidence images...
             </Typography>
             <LinearProgress sx={{ mt: 2, maxWidth: 300, mx: "auto" }} />
@@ -122,26 +134,38 @@ function ImageUploadPanel({ projectId }: Props) {
           <>
             <Box
               sx={{
-                width: 80,
-                height: 80,
+                width: { xs: 60, sm: 80 },
+                height: { xs: 60, sm: 80 },
                 borderRadius: "50%",
                 bgcolor: "primary.main",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 mx: "auto",
-                mb: 3,
+                mb: { xs: 2, sm: 3 },
               }}
             >
-              <CloudUpload sx={{ fontSize: 40, color: "white" }} />
+              <CloudUpload
+                sx={{ fontSize: { xs: 28, sm: 40 }, color: "white" }}
+              />
             </Box>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+            <Typography
+              variant={isMobile ? "body1" : "h6"}
+              gutterBottom
+              fontWeight={600}
+            >
               {isDragActive
                 ? "Drop images here"
-                : "Drag & drop evidence images"}
+                : isMobile
+                  ? "Tap to upload images"
+                  : "Drag & drop evidence images"}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              or click to browse files
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 2, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}
+            >
+              {isMobile ? "or browse files" : "or click to browse files"}
             </Typography>
             <Box
               sx={{
@@ -165,15 +189,17 @@ function ImageUploadPanel({ projectId }: Props) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          mb: 3,
+          mb: { xs: 2, sm: 3 },
           pb: 2,
           borderBottom: "1px solid",
           borderColor: "divider",
+          flexWrap: "wrap",
+          gap: 1,
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <PhotoLibrary color="primary" />
-          <Typography variant="h6" fontWeight={600}>
+          <PhotoLibrary color="primary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
+          <Typography variant={isMobile ? "body1" : "h6"} fontWeight={600}>
             Evidence Gallery
           </Typography>
           <Chip
@@ -183,12 +209,13 @@ function ImageUploadPanel({ projectId }: Props) {
               bgcolor: "primary.main",
               color: "white",
               fontWeight: 600,
+              fontSize: { xs: "0.7rem", sm: "0.75rem" },
             }}
           />
         </Box>
       </Box>
 
-      <Grid container spacing={2.5}>
+      <Grid container spacing={{ xs: 1.5, sm: 2.5 }}>
         {images.map((image) => (
           <Grid item xs={6} sm={4} md={3} lg={2} key={image.id}>
             <Card
