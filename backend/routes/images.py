@@ -1,10 +1,10 @@
 """
 Images API Routes
 """
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import shutil
 import logging
@@ -24,15 +24,19 @@ router = APIRouter()
 async def upload_images(
     project_id: int,
     files: List[UploadFile] = File(...),
+    demo_mode: bool = Query(False, description="Skip forensic validation for demo purposes"),
     db: AsyncSession = Depends(get_db)
 ):
-    """Upload images to a project"""
+    """Upload images to a project. Set demo_mode=true to skip forensic validation."""
     try:
         # Verify project exists
         result = await db.execute(select(Project).where(Project.id == project_id))
         project = result.scalar_one_or_none()
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
+        
+        if demo_mode:
+            logger.info(f"Demo mode enabled for project {project_id} - skipping forensic validation")
         
         # Create project upload directory
         project_upload_dir = settings.UPLOAD_DIR / str(project_id)
@@ -58,10 +62,19 @@ async def upload_images(
             file_hash = ChainOfCustodyService.calculate_file_hash(file_path)
             quality_score = ImageProcessor.assess_image_quality(file_path)
             
-            # Run forensic validation
-            forensic_result = ForensicValidator.validate_forensic_suitability(
-                file_path, metadata
-            )
+            # Run forensic validation (skip if demo_mode)
+            if demo_mode:
+                # Demo mode: Accept all images without validation
+                forensic_result = {
+                    "forensic_score": 1.0,
+                    "is_suitable": True,
+                    "warnings": [{"severity": "info", "message": "Demo mode - validation skipped", "code": "DEMO_MODE"}],
+                    "flags": {"demo_mode": True}
+                }
+            else:
+                forensic_result = ForensicValidator.validate_forensic_suitability(
+                    file_path, metadata
+                )
             
             # Create database record with URL-relative filepath
             relative_filepath = f"static/uploads/{project_id}/{file.filename}"

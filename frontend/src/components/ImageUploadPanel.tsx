@@ -30,6 +30,7 @@ import {
   Cancel,
   VerifiedUser,
   Refresh,
+  Science,
 } from "@mui/icons-material";
 import { useDropzone } from "react-dropzone";
 import {
@@ -41,9 +42,10 @@ import {
 
 interface Props {
   projectId: number;
+  demoMode?: boolean;
 }
 
-function ImageUploadPanel({ projectId }: Props) {
+function ImageUploadPanel({ projectId, demoMode = false }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [uploading, setUploading] = useState(false);
@@ -100,10 +102,12 @@ function ImageUploadPanel({ projectId }: Props) {
           formData.append("files", file);
         });
 
-        await imagesAPI.upload(projectId, formData);
+        await imagesAPI.upload(projectId, formData, demoMode);
         await fetchImages();
         await fetchValidationSummary();
-        alert(`Successfully uploaded ${acceptedFiles.length} images`);
+        alert(
+          `Successfully uploaded ${acceptedFiles.length} images${demoMode ? " (Demo Mode)" : ""}`,
+        );
       } catch (error) {
         console.error("Upload error:", error);
         alert("Failed to upload images");
@@ -111,7 +115,7 @@ function ImageUploadPanel({ projectId }: Props) {
         setUploading(false);
       }
     },
-    [projectId],
+    [projectId, demoMode],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -247,6 +251,24 @@ function ImageUploadPanel({ projectId }: Props) {
               Re-validate
             </Button>
           </Box>
+        </Alert>
+      )}
+
+      {/* Demo Mode Banner */}
+      {demoMode && (
+        <Alert
+          severity="info"
+          icon={<Science />}
+          sx={{
+            mb: 2,
+            bgcolor: "#fff3e0",
+            border: "1px solid #ff9800",
+            "& .MuiAlert-icon": { color: "#ff9800" },
+          }}
+        >
+          <AlertTitle sx={{ fontWeight: 600 }}>Demo Mode Active</AlertTitle>
+          Image validation guardrails are disabled. All images will be accepted
+          regardless of forensic quality.
         </Alert>
       )}
 

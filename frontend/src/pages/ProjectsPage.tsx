@@ -18,8 +18,17 @@ import {
   TextField,
   useMediaQuery,
   useTheme,
+  Switch,
+  FormControlLabel,
+  Alert,
 } from "@mui/material";
-import { Add, Folder, Image as ImageIcon, Delete } from "@mui/icons-material";
+import {
+  Add,
+  Folder,
+  Image as ImageIcon,
+  Delete,
+  Science,
+} from "@mui/icons-material";
 import { projectsAPI, Project } from "../api/client";
 
 function ProjectsPage() {
@@ -32,6 +41,9 @@ function ProjectsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [demoMode, setDemoMode] = useState(() => {
+    return localStorage.getItem("forensic_demo_mode") === "true";
+  });
   const [newProject, setNewProject] = useState({
     case_number: "",
     case_title: "",
@@ -45,6 +57,12 @@ function ProjectsPage() {
   useEffect(() => {
     loadProjects();
   }, []);
+
+  const handleDemoModeToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.checked;
+    setDemoMode(newValue);
+    localStorage.setItem("forensic_demo_mode", String(newValue));
+  };
 
   const loadProjects = async () => {
     try {
@@ -170,8 +188,70 @@ function ProjectsPage() {
               New Case
             </Button>
           </Box>
+          {/* Demo Mode Toggle */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: { xs: "center", sm: "flex-end" },
+              mt: { xs: 2, sm: 1 },
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={demoMode}
+                  onChange={handleDemoModeToggle}
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": {
+                      color: "#ff9800",
+                    },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "#ff9800",
+                    },
+                  }}
+                />
+              }
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Science
+                    sx={{
+                      fontSize: 18,
+                      color: demoMode ? "#ff9800" : "rgba(255,255,255,0.7)",
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: demoMode ? "#ff9800" : "rgba(255,255,255,0.7)",
+                      fontWeight: demoMode ? 600 : 400,
+                    }}
+                  >
+                    Demo Mode
+                  </Typography>
+                </Box>
+              }
+            />
+          </Box>
         </Container>
       </Box>
+
+      {/* Demo Mode Warning Banner */}
+      {demoMode && (
+        <Container maxWidth="xl" sx={{ mb: 2 }}>
+          <Alert
+            severity="warning"
+            icon={<Science />}
+            sx={{
+              bgcolor: "#fff3e0",
+              border: "1px solid #ff9800",
+              "& .MuiAlert-icon": { color: "#ff9800" },
+            }}
+          >
+            <strong>Demo Mode Active</strong> — Image validation guardrails are
+            disabled. Any image can be uploaded without forensic quality checks.
+          </Alert>
+        </Container>
+      )}
 
       <Container maxWidth="xl" sx={{ pb: { xs: 3, sm: 6 } }}>
         {/* Stats Bar */}
@@ -385,7 +465,11 @@ function ProjectsPage() {
                 <CardActions sx={{ p: 2, pt: 0, gap: 1 }}>
                   <Button
                     size="medium"
-                    onClick={() => navigate(`/projects/${project.id}`)}
+                    onClick={() =>
+                      navigate(`/projects/${project.id}`, {
+                        state: { demoMode },
+                      })
+                    }
                     variant="contained"
                     sx={{
                       bgcolor: "primary.main",

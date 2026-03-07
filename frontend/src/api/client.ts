@@ -127,10 +127,14 @@ export const projectsAPI = {
 export const imagesAPI = {
   list: (projectId: number) =>
     apiClient.get<Image[]>(`/projects/${projectId}/images`),
-  upload: (projectId: number, files: FormData) =>
-    apiClient.post<Image[]>(`/projects/${projectId}/images`, files, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+  upload: (projectId: number, files: FormData, demoMode: boolean = false) =>
+    apiClient.post<Image[]>(
+      `/projects/${projectId}/images?demo_mode=${demoMode}`,
+      files,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    ),
   getMetadata: (imageId: number) =>
     apiClient.get<Image>(`/images/${imageId}/metadata`),
   verify: (imageId: number) => apiClient.post(`/images/${imageId}/verify`),

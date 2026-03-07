@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Container,
   Box,
@@ -60,11 +60,17 @@ function TabPanel(props: TabPanelProps) {
 function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState(0);
+
+  // Get demo mode from navigation state or localStorage
+  const demoMode =
+    (location.state as { demoMode?: boolean })?.demoMode ??
+    localStorage.getItem("forensic_demo_mode") === "true";
 
   useEffect(() => {
     if (projectId) {
@@ -474,7 +480,10 @@ function ProjectDetailPage() {
 
         {/* Tab Panels */}
         <TabPanel value={currentTab} index={0}>
-          <ImageUploadPanel projectId={parseInt(projectId!)} />
+          <ImageUploadPanel
+            projectId={parseInt(projectId!)}
+            demoMode={demoMode}
+          />
         </TabPanel>
 
         <TabPanel value={currentTab} index={1}>
