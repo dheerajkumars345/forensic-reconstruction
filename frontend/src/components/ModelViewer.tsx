@@ -277,6 +277,26 @@ function ModelViewer({ projectId, demoMode = false }: Props) {
     fetchImages();
   }, [projectId]);
 
+  // Refetch images when component becomes visible (tab switch)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchImages();
+      }
+    };
+
+    // Also refetch periodically while visible to catch new uploads
+    const interval = setInterval(() => {
+      fetchImages();
+    }, 5000);
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [projectId]);
+
   const checkReconstructionStatus = async () => {
     try {
       const response = await reconstructionAPI.getStatus(projectId);
@@ -647,7 +667,7 @@ function ModelViewer({ projectId, demoMode = false }: Props) {
             position: "relative",
           }}
         >
-          {reconstruction ? (
+          {reconstruction || images.length > 0 ? (
             <Canvas camera={{ position: [20, 15, 20], fov: 45 }}>
               <OrbitControls target={[0, 0, 0]} />
               <Stars

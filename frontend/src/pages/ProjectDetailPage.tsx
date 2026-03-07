@@ -50,9 +50,11 @@ function TabPanel(props: TabPanelProps) {
       hidden={value !== index}
       id={`project-tabpanel-${index}`}
       aria-labelledby={`project-tab-${index}`}
+      style={{ display: value === index ? "block" : "none" }}
       {...other}
     >
-      {value === index && <Box sx={{ p: { xs: 1.5, sm: 3 } }}>{children}</Box>}
+      {/* Always render children to preserve state */}
+      <Box sx={{ p: { xs: 1.5, sm: 3 } }}>{children}</Box>
     </div>
   );
 }
