@@ -62,15 +62,18 @@ function MapView({ projectId }: Props) {
   const [images, setImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rejectedGpsCount, setRejectedGpsCount] = useState(0);
 
   useEffect(() => {
-    fetchImages();
+    fetchGpsImages();
   }, [projectId]);
 
-  const fetchImages = async () => {
+  const fetchGpsImages = async () => {
     try {
-      const response = await imagesAPI.list(projectId);
-      setImages(response.data);
+      // Use GPS endpoint that filters out unsuitable images
+      const response = await imagesAPI.getGpsImages(projectId);
+      setImages(response.data.images);
+      setRejectedGpsCount(response.data.rejected_with_gps || 0);
     } catch (err: any) {
       setError("Failed to load map data");
       console.error(err);
@@ -192,6 +195,15 @@ function MapView({ projectId }: Props) {
       </Box>
 
       <Box p={{ xs: 2, sm: 3 }}>
+        {/* Warning about rejected GPS images */}
+        {rejectedGpsCount > 0 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {rejectedGpsCount} GPS-tagged image(s) excluded from map due to
+            failing forensic validation. Verify images in the Evidence Images
+            tab to include them.
+          </Alert>
+        )}
+
         {loading ? (
           <Box
             sx={{

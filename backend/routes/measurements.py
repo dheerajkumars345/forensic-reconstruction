@@ -23,13 +23,27 @@ async def create_measurement(
 ):
     """Create new measurement"""
     try:
-        # Get reconstruction for scale factor
+        # Get reconstruction for scale factor - required for measurements
         result = await db.execute(
             select(Reconstruction)
             .where(Reconstruction.project_id == project_id)
             .order_by(Reconstruction.completed_at.desc())
         )
         reconstruction = result.scalar_one_or_none()
+        
+        # Require a valid reconstruction before allowing measurements
+        if not reconstruction:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot create measurements: No 3D reconstruction found. Please run reconstruction with valid images first."
+            )
+        
+        if reconstruction.status == "failed":
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot create measurements: Reconstruction failed. Please upload suitable crime scene images and try again."
+            )
+        
         scale_factor = reconstruction.scale_factor if reconstruction else 1.0
         
         # Calculate measurement value based on type

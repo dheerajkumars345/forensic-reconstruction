@@ -105,6 +105,14 @@ export interface Measurement {
   created_at: string;
 }
 
+export interface GpsImagesResponse {
+  images: Image[];
+  total_with_gps: number;
+  suitable_with_gps: number;
+  rejected_with_gps: number;
+  message?: string;
+}
+
 // API Functions
 export const projectsAPI = {
   list: () => apiClient.get<Project[]>("/projects"),
@@ -138,6 +146,8 @@ export const imagesAPI = {
       rejected: number;
       suitable: number;
     }>(`/projects/${projectId}/images/revalidate`),
+  getGpsImages: (projectId: number) =>
+    apiClient.get<GpsImagesResponse>(`/projects/${projectId}/images/gps`),
 };
 
 export const reconstructionAPI = {

@@ -32,9 +32,22 @@ async def generate_report(
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         
-        # Get images
+        # Get images - only include suitable or verified images
         images_result = await db.execute(select(Image).where(Image.project_id == project_id))
-        images = images_result.scalars().all()
+        all_images = images_result.scalars().all()
+        
+        # Filter: only include images that are suitable OR manually verified
+        images = [
+            img for img in all_images
+            if img.is_suitable != False or img.is_verified == True
+        ]
+        rejected_count = len(all_images) - len(images)
+        
+        if len(images) == 0:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot generate report: No suitable images found. {rejected_count} image(s) were rejected as irrelevant. Please upload valid crime scene photographs or manually verify existing images."
+            )
         
         # Get reconstruction
         recon_result = await db.execute(
@@ -76,10 +89,18 @@ async def generate_report(
                 "date_taken": img.date_taken,
                 "gps_latitude": img.gps_latitude,
                 "gps_longitude": img.gps_longitude,
-                "quality_score": img.quality_score
+                "quality_score": img.quality_score,
+                "forensic_score": img.forensic_score,
+                "is_verified": img.is_verified
             }
             for img in images
         ]
+        
+        # Add note about rejected images if any
+        if rejected_count > 0:
+            if not request.additional_notes:
+                request.additional_notes = ""
+            request.additional_notes += f"\n\nNote: {rejected_count} image(s) were excluded from this report due to failing forensic validation."
         
         reconstruction_data = None
         if reconstruction:

@@ -277,6 +277,46 @@ async def get_validation_summary(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/projects/{project_id}/images/gps")
+async def list_gps_images(
+    project_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    List images with GPS data for map display.
+    Only returns suitable or verified images with GPS coordinates.
+    """
+    try:
+        result = await db.execute(
+            select(Image).where(Image.project_id == project_id).order_by(Image.uploaded_at)
+        )
+        images = result.scalars().all()
+        
+        # Filter for GPS data AND (suitable OR verified)
+        gps_images = []
+        rejected_gps_count = 0
+        
+        for img in images:
+            if img.gps_latitude and img.gps_longitude:
+                if img.is_suitable != False or img.is_verified == True:
+                    response = ImageResponse.model_validate(img)
+                    response.filepath = _convert_filepath_to_url(img.filepath, project_id)
+                    gps_images.append(response)
+                else:
+                    rejected_gps_count += 1
+        
+        return {
+            "images": gps_images,
+            "total_with_gps": len(gps_images) + rejected_gps_count,
+            "suitable_with_gps": len(gps_images),
+            "rejected_with_gps": rejected_gps_count,
+            "message": f"{rejected_gps_count} GPS-tagged images excluded due to validation failures" if rejected_gps_count > 0 else None
+        }
+    except Exception as e:
+        logger.error(f"Error listing GPS images: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/projects/{project_id}/images/revalidate")
 async def revalidate_images(
     project_id: int,
