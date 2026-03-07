@@ -91,9 +91,38 @@ function MapView({ projectId }: Props) {
       title: img.filename,
       id: img.id,
       thumbnail: img.filepath,
+      dateTaken: img.date_taken,
+      camera: img.camera_model || img.camera_make || "Unknown",
+      altitude: img.gps_altitude,
     }));
 
-  // Simulate macro-reconstruction path (blood spatter distribution)
+  // Calculate scene statistics from real GPS data
+  const gpsStats =
+    markers.length > 0
+      ? {
+          centerLat:
+            markers.reduce((sum, m) => sum + m.position[0], 0) / markers.length,
+          centerLon:
+            markers.reduce((sum, m) => sum + m.position[1], 0) / markers.length,
+          minLat: Math.min(...markers.map((m) => m.position[0])),
+          maxLat: Math.max(...markers.map((m) => m.position[0])),
+          minLon: Math.min(...markers.map((m) => m.position[1])),
+          maxLon: Math.max(...markers.map((m) => m.position[1])),
+        }
+      : null;
+
+  // Calculate approximate scene span in meters
+  const sceneSpan = gpsStats
+    ? {
+        latSpan: Math.abs(gpsStats.maxLat - gpsStats.minLat) * 111320, // ~111.32km per degree
+        lonSpan:
+          Math.abs(gpsStats.maxLon - gpsStats.minLon) *
+          111320 *
+          Math.cos((gpsStats.centerLat * Math.PI) / 180),
+      }
+    : null;
+
+  // Path between first and last marker (for trajectory visualization)
   const macroPath =
     markers.length > 1
       ? [markers[0].position, markers[markers.length - 1].position]
@@ -166,6 +195,13 @@ function MapView({ projectId }: Props) {
               size="small"
               color="success"
             />
+            {sceneSpan && !isMobile && (
+              <Chip
+                label={`Scene: ${sceneSpan.latSpan.toFixed(1)}m × ${sceneSpan.lonSpan.toFixed(1)}m`}
+                size="small"
+                sx={{ bgcolor: "rgba(255,255,255,0.2)", color: "white" }}
+              />
+            )}
             <FormControlLabel
               control={
                 <Switch
@@ -291,15 +327,15 @@ function MapView({ projectId }: Props) {
               {markers.map((marker) => (
                 <Marker key={marker.id} position={marker.position}>
                   <Popup>
-                    <Box sx={{ textAlign: "center" }}>
-                      <Typography variant="subtitle2">
+                    <Box sx={{ textAlign: "center", minWidth: 150 }}>
+                      <Typography variant="subtitle2" fontWeight="bold">
                         {marker.title}
                       </Typography>
                       <Box
                         component="img"
                         src={`${STATIC_BASE_URL}/${marker.thumbnail}`}
                         sx={{
-                          width: 100,
+                          width: 120,
                           height: "auto",
                           mt: 1,
                           borderRadius: 1,
@@ -308,11 +344,38 @@ function MapView({ projectId }: Props) {
                       <Typography
                         variant="caption"
                         display="block"
-                        sx={{ mt: 1 }}
+                        sx={{ mt: 1, fontFamily: "monospace" }}
                       >
-                        {marker.position[0].toFixed(6)},{" "}
-                        {marker.position[1].toFixed(6)}
+                        {marker.position[0].toFixed(6)}°,{" "}
+                        {marker.position[1].toFixed(6)}°
                       </Typography>
+                      {marker.altitude && (
+                        <Typography
+                          variant="caption"
+                          display="block"
+                          color="text.secondary"
+                        >
+                          Alt: {marker.altitude.toFixed(1)}m
+                        </Typography>
+                      )}
+                      {marker.camera !== "Unknown" && (
+                        <Typography
+                          variant="caption"
+                          display="block"
+                          color="text.secondary"
+                        >
+                          📷 {marker.camera}
+                        </Typography>
+                      )}
+                      {marker.dateTaken && (
+                        <Typography
+                          variant="caption"
+                          display="block"
+                          color="text.secondary"
+                        >
+                          🕐 {new Date(marker.dateTaken).toLocaleString()}
+                        </Typography>
+                      )}
                     </Box>
                   </Popup>
                 </Marker>

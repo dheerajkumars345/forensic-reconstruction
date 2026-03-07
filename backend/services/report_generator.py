@@ -128,6 +128,12 @@ class ReportGenerator:
                 story.extend(self._create_image_section(images_data))
                 story.append(Spacer(1, 0.5*cm))
             
+            # GPS/Geospatial Analysis
+            gps_images = [img for img in images_data if img.get('gps_latitude') and img.get('gps_longitude')]
+            if gps_images:
+                story.extend(self._create_gps_analysis_section(gps_images))
+                story.append(Spacer(1, 0.5*cm))
+            
             # 3D Reconstruction
             if reconstruction_data:
                 story.extend(self._create_reconstruction_section(reconstruction_data))
@@ -297,26 +303,78 @@ class ReportGenerator:
         
         elements.append(Paragraph(f"IMAGE EVIDENCE AND METADATA ({len(images_data)} Items)", self.styles['CustomHeading']))
         
+        # Equipment summary
+        cameras = set()
+        for img in images_data:
+            make = img.get('camera_make') or ''
+            model = img.get('camera_model') or ''
+            if make or model:
+                cameras.add(f"{make} {model}".strip())
+        
+        if cameras:
+            camera_list = ", ".join(cameras) if cameras else "Unknown"
+            elements.append(Paragraph(
+                f"<b>Camera Equipment:</b> {camera_list}",
+                self.styles['CustomBody']
+            ))
+        
+        # GPS summary
+        gps_images = [img for img in images_data if img.get('gps_latitude') and img.get('gps_longitude')]
+        if gps_images:
+            lats = [img['gps_latitude'] for img in gps_images]
+            lons = [img['gps_longitude'] for img in gps_images]
+            center_lat = sum(lats) / len(lats)
+            center_lon = sum(lons) / len(lons)
+            
+            elements.append(Paragraph(
+                f"<b>GPS Coverage:</b> {len(gps_images)} images with coordinates. "
+                f"Center point: {center_lat:.6f}°, {center_lon:.6f}°",
+                self.styles['CustomBody']
+            ))
+        else:
+            elements.append(Paragraph(
+                "<b>GPS Coverage:</b> No GPS coordinates found in images.",
+                self.styles['CustomBody']
+            ))
+        
+        # Timeline summary
+        dated_images = [img for img in images_data if img.get('date_taken')]
+        if dated_images:
+            dates = [img['date_taken'] for img in dated_images]
+            earliest = min(dates)
+            latest = max(dates)
+            elements.append(Paragraph(
+                f"<b>Capture Timeline:</b> Images captured between {earliest} and {latest}",
+                self.styles['CustomBody']
+            ))
+        
+        elements.append(Spacer(1, 0.3*cm))
+        
         # Create table with comprehensive image metadata
-        table_data = [['#', 'Filename', 'ISO', 'Shutter', 'F-Stop', 'Focal', 'GPS Coordinates', 'Hash (SHA-256)']]
+        table_data = [['#', 'Filename', 'Camera', 'ISO', 'Shutter', 'GPS Coordinates', 'Hash (SHA-256)']]
         
         for idx, img in enumerate(images_data[:30], 1):
             gps = "N/A"
             if img.get('gps_latitude') and img.get('gps_longitude'):
-                gps = f"{img['gps_latitude']:.4f}, {img['gps_longitude']:.4f}"
+                gps = f"{img['gps_latitude']:.6f}, {img['gps_longitude']:.6f}"
+            
+            camera = "N/A"
+            if img.get('camera_model'):
+                camera = img['camera_model'][:15]
+            elif img.get('camera_make'):
+                camera = img['camera_make'][:15]
             
             table_data.append([
                 str(idx),
-                img.get('filename', 'N/A')[:20],
+                img.get('filename', 'N/A')[:18],
+                camera,
                 str(img.get('iso', 'N/A')),
                 str(img.get('exposure_time', 'N/A')),
-                f"f/{img.get('f_number', 'N/A')}" if img.get('f_number') else 'N/A',
-                f"{img.get('focal_length', 'N/A')}mm" if img.get('focal_length') else 'N/A',
                 gps,
                 img.get('file_hash', 'N/A')[:12] + '..'
             ])
         
-        table = Table(table_data, colWidths=[0.8*cm, 3.5*cm, 1.2*cm, 1.8*cm, 1.5*cm, 1.5*cm, 3.5*cm, 2.7*cm])
+        table = Table(table_data, colWidths=[0.8*cm, 3.2*cm, 2.5*cm, 1.2*cm, 1.8*cm, 4.5*cm, 2.5*cm])
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0d47a1')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -329,6 +387,96 @@ class ReportGenerator:
         
         elements.append(table)
         elements.append(Spacer(1, 0.5*cm))
+        return elements
+    
+    def _create_gps_analysis_section(self, gps_images: List[Dict[str, Any]]) -> List:
+        """Create GPS/Geospatial analysis section with real coordinate data"""
+        elements = []
+        
+        elements.append(Paragraph("GEOSPATIAL ANALYSIS", self.styles['CustomHeading']))
+        
+        # Calculate scene bounds and statistics
+        lats = [img['gps_latitude'] for img in gps_images]
+        lons = [img['gps_longitude'] for img in gps_images]
+        alts = [img.get('gps_altitude') for img in gps_images if img.get('gps_altitude')]
+        
+        min_lat, max_lat = min(lats), max(lats)
+        min_lon, max_lon = min(lons), max(lons)
+        center_lat = sum(lats) / len(lats)
+        center_lon = sum(lons) / len(lons)
+        
+        # Calculate approximate scene span using Haversine
+        import math
+        lat_span_km = abs(max_lat - min_lat) * 111.32  # 1 degree lat ≈ 111.32 km
+        lon_span_km = abs(max_lon - min_lon) * 111.32 * math.cos(math.radians(center_lat))
+        
+        intro_text = f"""
+        All GPS coordinates were extracted directly from image EXIF metadata. The following analysis 
+        describes the geographic distribution of evidence photographs at the crime scene.
+        """
+        elements.append(Paragraph(intro_text, self.styles['CustomBody']))
+        
+        # Scene bounds table
+        bounds_data = [
+            ['GPS Parameter', 'Value'],
+            ['Center Point (Lat)', f"{center_lat:.8f}°"],
+            ['Center Point (Lon)', f"{center_lon:.8f}°"],
+            ['Northern Bound', f"{max_lat:.8f}°"],
+            ['Southern Bound', f"{min_lat:.8f}°"],
+            ['Eastern Bound', f"{max_lon:.8f}°"],
+            ['Western Bound', f"{min_lon:.8f}°"],
+            ['Scene Span (N-S)', f"{lat_span_km*1000:.2f} meters"],
+            ['Scene Span (E-W)', f"{lon_span_km*1000:.2f} meters"],
+            ['Images with GPS', str(len(gps_images))],
+        ]
+        
+        if alts:
+            min_alt, max_alt = min(alts), max(alts)
+            bounds_data.append(['Altitude Range', f"{min_alt:.1f}m - {max_alt:.1f}m"])
+        
+        table = Table(bounds_data, colWidths=[6*cm, 10*cm])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2e7d32')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('BACKGROUND', (0, 1), (0, -1), colors.HexColor('#e8f5e9')),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ]))
+        
+        elements.append(table)
+        elements.append(Spacer(1, 0.3*cm))
+        
+        # Individual coordinates table
+        elements.append(Paragraph("<b>Individual Image Coordinates:</b>", self.styles['CustomBody']))
+        
+        coord_data = [['#', 'Filename', 'Latitude', 'Longitude', 'Altitude', 'Date/Time']]
+        for idx, img in enumerate(gps_images[:20], 1):
+            alt_str = f"{img.get('gps_altitude'):.1f}m" if img.get('gps_altitude') else "N/A"
+            date_str = str(img.get('date_taken', 'N/A'))[:19] if img.get('date_taken') else "N/A"
+            coord_data.append([
+                str(idx),
+                img.get('filename', 'N/A')[:20],
+                f"{img['gps_latitude']:.8f}°",
+                f"{img['gps_longitude']:.8f}°",
+                alt_str,
+                date_str
+            ])
+        
+        coord_table = Table(coord_data, colWidths=[0.8*cm, 3.5*cm, 3*cm, 3*cm, 2*cm, 4*cm])
+        coord_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1565c0')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#e3f2fd')]),
+        ]))
+        
+        elements.append(coord_table)
+        
         return elements
     
     def _create_reconstruction_section(self, reconstruction_data: Dict[str, Any]) -> List:
