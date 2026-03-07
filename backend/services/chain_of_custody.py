@@ -228,16 +228,20 @@ class ChainOfCustodyService:
         db: AsyncSession,
         project_id: int,
         num_images: int,
-        user_name: str = "System"
+        user_name: str = "System",
+        metadata: dict = None
     ):
         """Log 3D reconstruction start"""
+        log_metadata = {"num_images": num_images}
+        if metadata:
+            log_metadata.update(metadata)
         await ChainOfCustodyService.log_event(
             db=db,
             project_id=project_id,
             event_type="reconstruction_start",
             event_description=f"3D reconstruction started with {num_images} images",
             user_name=user_name,
-            metadata={"num_images": num_images}
+            metadata=log_metadata
         )
     
     @staticmethod

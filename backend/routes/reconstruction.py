@@ -40,11 +40,28 @@ async def start_reconstruction(
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         
-        # Get images
-        images_result = await db.execute(select(Image).where(Image.project_id == project_id))
+        # Get images - ONLY suitable or verified images
+        images_result = await db.execute(
+            select(Image).where(
+                Image.project_id == project_id,
+                (Image.is_suitable == True) | (Image.is_verified == True)
+            )
+        )
         images = images_result.scalars().all()
         
+        # Also get rejected count for warning
+        all_images_result = await db.execute(
+            select(Image).where(Image.project_id == project_id)
+        )
+        all_images = all_images_result.scalars().all()
+        rejected_count = len(all_images) - len(images)
+        
         if len(images) < 2:
+            if rejected_count > 0:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Need at least 2 suitable images for reconstruction. {rejected_count} image(s) were rejected due to forensic validation. Please verify them manually or upload appropriate crime scene photographs."
+                )
             raise HTTPException(status_code=400, detail="Need at least 2 images for reconstruction")
         
         # Create reconstruction record
@@ -59,11 +76,13 @@ async def start_reconstruction(
         await db.commit()
         await db.refresh(reconstruction)
         
-        # Log reconstruction start
+        # Log reconstruction start (include warning about skipped images)
+        metadata = {"rejected_images": rejected_count} if rejected_count > 0 else None
         await ChainOfCustodyService.log_reconstruction_start(
             db=db,
             project_id=project_id,
-            num_images=len(images)
+            num_images=len(images),
+            metadata=metadata
         )
         
         # Start background task

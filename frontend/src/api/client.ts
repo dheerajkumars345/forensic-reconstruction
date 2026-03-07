@@ -28,6 +28,34 @@ export interface Project {
   image_count?: number;
 }
 
+export interface ValidationWarning {
+  severity: "info" | "warning" | "error";
+  message: string;
+  code: string;
+}
+
+export interface ValidationFlags {
+  missing_metadata?: boolean;
+  low_quality?: boolean;
+  low_resolution?: boolean;
+  insufficient_features?: boolean;
+  potentially_irrelevant?: boolean;
+  missing_gps?: boolean;
+  missing_timestamp?: boolean;
+  missing_camera_info?: boolean;
+}
+
+export interface ValidationSummary {
+  total: number;
+  suitable: number;
+  with_warnings: number;
+  rejected: number;
+  verified: number;
+  average_forensic_score: number;
+  warning_summary: Record<string, number>;
+  overall_recommendation: string;
+}
+
 export interface Image {
   id: number;
   project_id: number;
@@ -42,6 +70,12 @@ export interface Image {
   uploaded_at: string;
   is_processed: boolean;
   quality_score?: number;
+  // Forensic validation fields
+  forensic_score?: number;
+  is_verified?: boolean;
+  is_suitable?: boolean;
+  validation_warnings?: ValidationWarning[];
+  validation_flags?: ValidationFlags;
 }
 
 export interface Reconstruction {
@@ -91,6 +125,12 @@ export const imagesAPI = {
     }),
   getMetadata: (imageId: number) =>
     apiClient.get<Image>(`/images/${imageId}/metadata`),
+  verify: (imageId: number) => apiClient.post(`/images/${imageId}/verify`),
+  unverify: (imageId: number) => apiClient.delete(`/images/${imageId}/verify`),
+  getValidationSummary: (projectId: number) =>
+    apiClient.get<ValidationSummary>(
+      `/projects/${projectId}/images/validation-summary`,
+    ),
 };
 
 export const reconstructionAPI = {

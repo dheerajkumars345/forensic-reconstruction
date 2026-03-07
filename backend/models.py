@@ -82,6 +82,13 @@ class Image(Base):
     is_processed = Column(Boolean, default=False)
     quality_score = Column(Float)
     
+    # Forensic Validation
+    forensic_score = Column(Float)  # 0-1 score for forensic suitability
+    is_verified = Column(Boolean, default=False)  # Manually verified by examiner
+    validation_warnings = Column(JSON)  # List of validation warnings
+    validation_flags = Column(JSON)  # Dict of validation flags
+    is_suitable = Column(Boolean, default=True)  # Auto-determined suitability
+    
     # Timestamps
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     
@@ -246,6 +253,12 @@ class ImageMetadata(BaseModel):
     quality_score: Optional[float]
 
 
+class ValidationWarning(BaseModel):
+    severity: str
+    message: str
+    code: str
+
+
 class ImageResponse(BaseModel):
     id: int
     project_id: int
@@ -260,6 +273,12 @@ class ImageResponse(BaseModel):
     uploaded_at: datetime
     is_processed: bool
     quality_score: Optional[float]
+    # Forensic validation fields
+    forensic_score: Optional[float] = None
+    is_verified: bool = False
+    is_suitable: bool = True
+    validation_warnings: Optional[List[Dict[str, Any]]] = None
+    validation_flags: Optional[Dict[str, bool]] = None
     
     class Config:
         from_attributes = True

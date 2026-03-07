@@ -13,10 +13,29 @@ import {
   LinearProgress,
   useMediaQuery,
   useTheme,
+  Alert,
+  AlertTitle,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
-import { CloudUpload, PhotoLibrary, Verified } from "@mui/icons-material";
+import {
+  CloudUpload,
+  PhotoLibrary,
+  Verified,
+  Warning,
+  Error as ErrorIcon,
+  Info,
+  CheckCircle,
+  Cancel,
+  VerifiedUser,
+} from "@mui/icons-material";
 import { useDropzone } from "react-dropzone";
-import { imagesAPI, STATIC_BASE_URL } from "../api/client";
+import {
+  imagesAPI,
+  STATIC_BASE_URL,
+  ValidationSummary,
+  Image,
+} from "../api/client";
 
 interface Props {
   projectId: number;
@@ -26,10 +45,13 @@ function ImageUploadPanel({ projectId }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [uploading, setUploading] = useState(false);
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<Image[]>([]);
+  const [validationSummary, setValidationSummary] =
+    useState<ValidationSummary | null>(null);
 
   useEffect(() => {
     fetchImages();
+    fetchValidationSummary();
   }, [projectId]);
 
   const fetchImages = async () => {
@@ -38,6 +60,32 @@ function ImageUploadPanel({ projectId }: Props) {
       setImages(response.data);
     } catch (error) {
       console.error("Error fetching images:", error);
+    }
+  };
+
+  const fetchValidationSummary = async () => {
+    try {
+      const response = await imagesAPI.getValidationSummary(projectId);
+      setValidationSummary(response.data);
+    } catch (error) {
+      console.error("Error fetching validation summary:", error);
+    }
+  };
+
+  const handleVerifyImage = async (
+    imageId: number,
+    currentlyVerified: boolean,
+  ) => {
+    try {
+      if (currentlyVerified) {
+        await imagesAPI.unverify(imageId);
+      } else {
+        await imagesAPI.verify(imageId);
+      }
+      await fetchImages();
+      await fetchValidationSummary();
+    } catch (error) {
+      console.error("Error verifying image:", error);
     }
   };
 
@@ -52,6 +100,7 @@ function ImageUploadPanel({ projectId }: Props) {
 
         await imagesAPI.upload(projectId, formData);
         await fetchImages();
+        await fetchValidationSummary();
         alert(`Successfully uploaded ${acceptedFiles.length} images`);
       } catch (error) {
         console.error("Upload error:", error);
@@ -67,6 +116,25 @@ function ImageUploadPanel({ projectId }: Props) {
     onDrop,
     accept: { "image/*": [".jpg", ".jpeg", ".png", ".tif", ".tiff"] },
   });
+
+  const getWarningIcon = (severity: string) => {
+    switch (severity) {
+      case "error":
+        return <ErrorIcon sx={{ fontSize: 14, color: "error.main" }} />;
+      case "warning":
+        return <Warning sx={{ fontSize: 14, color: "warning.main" }} />;
+      default:
+        return <Info sx={{ fontSize: 14, color: "info.main" }} />;
+    }
+  };
+
+  const getSuitabilityColor = (image: Image) => {
+    if (image.is_verified) return "success.main";
+    if (!image.is_suitable) return "error.main";
+    if (image.forensic_score && image.forensic_score < 0.7)
+      return "warning.main";
+    return "success.main";
+  };
 
   return (
     <Paper
@@ -97,6 +165,56 @@ function ImageUploadPanel({ projectId }: Props) {
           reconstruction
         </Typography>
       </Box>
+
+      {/* Validation Summary */}
+      {validationSummary && validationSummary.total > 0 && (
+        <Alert
+          severity={
+            validationSummary.rejected > validationSummary.suitable
+              ? "error"
+              : validationSummary.average_forensic_score < 0.7
+                ? "warning"
+                : "success"
+          }
+          sx={{ mb: 3, borderRadius: 2 }}
+          icon={
+            validationSummary.rejected > validationSummary.suitable ? (
+              <ErrorIcon />
+            ) : validationSummary.average_forensic_score < 0.7 ? (
+              <Warning />
+            ) : (
+              <CheckCircle />
+            )
+          }
+        >
+          <AlertTitle sx={{ fontWeight: 600 }}>
+            Forensic Validation Summary
+          </AlertTitle>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 1 }}>
+            <Typography variant="body2">
+              <strong>{validationSummary.suitable}</strong> suitable
+            </Typography>
+            <Typography variant="body2">
+              <strong>{validationSummary.with_warnings}</strong> with warnings
+            </Typography>
+            <Typography variant="body2" color="error.main">
+              <strong>{validationSummary.rejected}</strong> rejected
+            </Typography>
+            <Typography variant="body2" color="success.main">
+              <strong>{validationSummary.verified}</strong> verified
+            </Typography>
+            <Typography variant="body2">
+              Score:{" "}
+              <strong>
+                {(validationSummary.average_forensic_score * 100).toFixed(0)}%
+              </strong>
+            </Typography>
+          </Box>
+          <Typography variant="caption" color="text.secondary">
+            {validationSummary.overall_recommendation}
+          </Typography>
+        </Alert>
+      )}
 
       {/* Upload Zone */}
       <Box
@@ -221,15 +339,20 @@ function ImageUploadPanel({ projectId }: Props) {
             <Card
               elevation={0}
               sx={{
-                border: "1px solid",
-                borderColor: "divider",
+                border: "2px solid",
+                borderColor: !image.is_suitable
+                  ? "error.main"
+                  : image.is_verified
+                    ? "success.main"
+                    : "divider",
                 borderRadius: 2,
                 overflow: "hidden",
                 transition: "all 0.2s ease",
+                opacity: image.is_suitable ? 1 : 0.7,
                 "&:hover": {
                   transform: "translateY(-2px)",
                   boxShadow: "0 8px 16px rgba(26, 54, 93, 0.1)",
-                  borderColor: "primary.light",
+                  borderColor: getSuitabilityColor(image),
                 },
               }}
             >
@@ -241,22 +364,104 @@ function ImageUploadPanel({ projectId }: Props) {
                   alt={image.filename}
                   sx={{ objectFit: "cover" }}
                 />
-                {image.file_hash && (
+                {/* Suitability indicator */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    display: "flex",
+                    gap: 0.5,
+                  }}
+                >
+                  {image.is_verified ? (
+                    <Tooltip title="Verified by examiner">
+                      <Box
+                        sx={{
+                          bgcolor: "rgba(45, 106, 79, 0.95)",
+                          borderRadius: "50%",
+                          width: 24,
+                          height: 24,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <VerifiedUser sx={{ fontSize: 14, color: "white" }} />
+                      </Box>
+                    </Tooltip>
+                  ) : !image.is_suitable ? (
+                    <Tooltip title="Not suitable for forensic use">
+                      <Box
+                        sx={{
+                          bgcolor: "rgba(211, 47, 47, 0.95)",
+                          borderRadius: "50%",
+                          width: 24,
+                          height: 24,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Cancel sx={{ fontSize: 14, color: "white" }} />
+                      </Box>
+                    </Tooltip>
+                  ) : image.validation_warnings &&
+                    image.validation_warnings.length > 0 ? (
+                    <Tooltip
+                      title={image.validation_warnings
+                        .map((w) => w.message)
+                        .join("; ")}
+                    >
+                      <Box
+                        sx={{
+                          bgcolor: "rgba(237, 108, 2, 0.95)",
+                          borderRadius: "50%",
+                          width: 24,
+                          height: 24,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Warning sx={{ fontSize: 14, color: "white" }} />
+                      </Box>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip title="Passed all forensic checks">
+                      <Box
+                        sx={{
+                          bgcolor: "rgba(45, 106, 79, 0.9)",
+                          borderRadius: "50%",
+                          width: 24,
+                          height: 24,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <CheckCircle sx={{ fontSize: 14, color: "white" }} />
+                      </Box>
+                    </Tooltip>
+                  )}
+                </Box>
+                {/* Forensic score badge */}
+                {image.forensic_score !== undefined && (
                   <Box
                     sx={{
                       position: "absolute",
-                      top: 8,
-                      right: 8,
-                      bgcolor: "rgba(45, 106, 79, 0.9)",
-                      borderRadius: "50%",
-                      width: 24,
-                      height: 24,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      bottom: 8,
+                      left: 8,
+                      bgcolor: "rgba(0,0,0,0.7)",
+                      color: "white",
+                      px: 1,
+                      py: 0.25,
+                      borderRadius: 1,
+                      fontSize: "10px",
+                      fontWeight: 600,
                     }}
                   >
-                    <Verified sx={{ fontSize: 14, color: "white" }} />
+                    {(image.forensic_score * 100).toFixed(0)}%
                   </Box>
                 )}
               </Box>
@@ -268,7 +473,9 @@ function ImageUploadPanel({ projectId }: Props) {
                 >
                   {image.filename}
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                <Box
+                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}
+                >
                   {image.width && image.height && (
                     <Chip
                       label={`${image.width}×${image.height}`}
@@ -292,7 +499,65 @@ function ImageUploadPanel({ projectId }: Props) {
                       }}
                     />
                   )}
+                  {image.validation_flags?.missing_timestamp && (
+                    <Chip
+                      label="No Date"
+                      size="small"
+                      sx={{
+                        fontSize: "9px",
+                        height: 18,
+                        bgcolor: "warning.main",
+                        color: "white",
+                      }}
+                    />
+                  )}
+                  {image.validation_flags?.potentially_irrelevant && (
+                    <Chip
+                      label="Review"
+                      size="small"
+                      sx={{
+                        fontSize: "9px",
+                        height: 18,
+                        bgcolor: "error.main",
+                        color: "white",
+                      }}
+                    />
+                  )}
                 </Box>
+                {/* Verify button for unsuitable images */}
+                {!image.is_suitable && !image.is_verified && (
+                  <Tooltip title="Click to manually verify this image as appropriate">
+                    <Chip
+                      label="Click to Verify"
+                      size="small"
+                      clickable
+                      onClick={() => handleVerifyImage(image.id, false)}
+                      sx={{
+                        fontSize: "9px",
+                        height: 20,
+                        bgcolor: "primary.main",
+                        color: "white",
+                        width: "100%",
+                        "&:hover": { bgcolor: "primary.dark" },
+                      }}
+                    />
+                  </Tooltip>
+                )}
+                {image.is_verified && (
+                  <Chip
+                    label="Verified ✓"
+                    size="small"
+                    clickable
+                    onClick={() => handleVerifyImage(image.id, true)}
+                    sx={{
+                      fontSize: "9px",
+                      height: 20,
+                      bgcolor: "success.main",
+                      color: "white",
+                      width: "100%",
+                    }}
+                  />
+                )}
               </CardContent>
             </Card>
           </Grid>
