@@ -40,7 +40,6 @@ import {
 
 interface Props {
   projectId: number;
-  demoMode?: boolean;
 }
 
 // 3D Image Label Component (Using HTML for stability)
@@ -218,7 +217,7 @@ function SimulatedPointCloud({ count = 15000 }) {
   );
 }
 
-function ModelViewer({ projectId, demoMode = false }: Props) {
+function ModelViewer({ projectId }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(false);
@@ -323,38 +322,16 @@ function ModelViewer({ projectId, demoMode = false }: Props) {
       if (response.data.status === "completed") {
         fetchPointCloudData();
       } else if (response.data.status === "failed") {
-        if (demoMode) {
-          // Demo mode: Create simulated reconstruction instead of showing error
-          setReconstruction({
-            ...response.data,
-            status: "completed",
-            num_points: 15000,
-            error_message: null,
-          });
-          // Don't set error, allow simulated point cloud to show
-        } else {
-          setError(
-            response.data.error_message ||
-              "Reconstruction failed. Not enough matching features between images.",
-          );
-        }
+        setError(
+          response.data.error_message ||
+            "Reconstruction failed. Upload overlapping images of the same scene from different angles. Use the test images in backend/photogrammetry_test_images/ for demo.",
+        );
       }
     } catch (err: any) {
-      if (demoMode) {
-        // Demo mode: Create simulated reconstruction on error
-        setReconstruction({
-          id: 0,
-          project_id: projectId,
-          status: "completed",
-          num_points: 15000,
-          num_images_used: images.length,
-        });
-      } else {
-        const msg =
-          err.response?.data?.detail ||
-          "3D Reconstruction failed. Ensure images have overlapping views.";
-        setError(msg);
-      }
+      const msg =
+        err.response?.data?.detail ||
+        "3D Reconstruction failed. Upload overlapping images of the same scene from different angles. Use the test images in backend/photogrammetry_test_images/ for demo.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -670,7 +647,7 @@ function ModelViewer({ projectId, demoMode = false }: Props) {
                 position={[0, -2.5, 0]}
               />
 
-              {/* Point Cloud - Use REAL data if available */}
+              {/* Point Cloud - Show REAL data only */}
               {(viewMode === "cloud" || viewMode === "both") && (
                 <>
                   {pointCloudArrays ? (
@@ -680,29 +657,34 @@ function ModelViewer({ projectId, demoMode = false }: Props) {
                     />
                   ) : (
                     <>
-                      <SimulatedPointCloud count={20000} />
-                      {/* Warning overlay for simulated data */}
-                      <Html position={[0, 8, 0]} center>
+                      {/* Info message when no real point cloud data */}
+                      <Html position={[0, 5, 0]} center>
                         <Box
                           sx={{
-                            bgcolor: "rgba(255, 152, 0, 0.9)",
-                            px: 2,
-                            py: 1,
-                            borderRadius: 1,
+                            bgcolor: "rgba(26, 54, 93, 0.95)",
+                            px: 3,
+                            py: 2,
+                            borderRadius: 2,
                             textAlign: "center",
+                            border: "1px solid #4a90d9",
+                            maxWidth: 300,
                           }}
                         >
                           <Typography
                             sx={{
-                              color: "#000",
-                              fontSize: "12px",
+                              color: "#fff",
+                              fontSize: "14px",
                               fontWeight: 700,
+                              mb: 1,
                             }}
                           >
-                            PREVIEW MODE - NOT REAL DATA
+                            No Point Cloud Data
                           </Typography>
-                          <Typography sx={{ color: "#333", fontSize: "10px" }}>
-                            Click "Generate Model" to create real 3D from images
+                          <Typography
+                            sx={{ color: "#90cdf4", fontSize: "12px" }}
+                          >
+                            Click "Generate Model" with overlapping images of
+                            the same scene from multiple angles
                           </Typography>
                         </Box>
                       </Html>

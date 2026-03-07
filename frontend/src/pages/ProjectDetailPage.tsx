@@ -487,7 +487,7 @@ function ProjectDetailPage() {
         </TabPanel>
 
         <TabPanel value={currentTab} index={1}>
-          <ModelViewer projectId={parseInt(projectId!)} demoMode={demoMode} />
+          <ModelViewer projectId={parseInt(projectId!)} />
         </TabPanel>
 
         <TabPanel value={currentTab} index={2}>

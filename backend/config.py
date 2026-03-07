@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     # Photogrammetry Settings
     MIN_OVERLAP_PERCENTAGE: float = 60.0
     MAX_OVERLAP_PERCENTAGE: float = 80.0
-    MIN_MATCHES_THRESHOLD: int = 30  # Minimum feature matches between image pairs
+    MIN_MATCHES_THRESHOLD: int = 10  # Minimum feature matches between image pairs (lowered for better compatibility)
     RECONSTRUCTION_QUALITY: str = "high"  # low, medium, high, ultra
     
     # 3D Reconstruction

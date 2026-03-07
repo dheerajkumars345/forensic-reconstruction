@@ -139,15 +139,23 @@ class PhotogrammetryService:
             camera_poses = []
             point_colors = []
             
-            # Match features between consecutive images
-            for i in range(len(image_paths) - 1):
+            # Match features between ALL image pairs for better reconstruction
+            # This captures more correspondences than just consecutive pairs
+            image_pairs = []
+            for i in range(len(image_paths)):
+                for j in range(i + 1, len(image_paths)):
+                    image_pairs.append((i, j))
+            
+            logger.info(f"Processing {len(image_pairs)} image pairs for reconstruction")
+            
+            for i, j in image_pairs:
                 img1_path = image_paths[i]
-                img2_path = image_paths[i + 1]
+                img2_path = image_paths[j]
                 
                 kp1 = keypoints_list[i]
-                kp2 = keypoints_list[i + 1]
+                kp2 = keypoints_list[j]
                 desc1 = descriptors_list[i]
-                desc2 = descriptors_list[i + 1]
+                desc2 = descriptors_list[j]
                 
                 # Match features
                 matches = PhotogrammetryService.match_features(desc1, desc2)
@@ -198,7 +206,7 @@ class PhotogrammetryService:
                 point_colors.extend(colors)
                 camera_poses.append({"R": R.tolist(), "t": t.tolist()})
                 
-                logger.info(f"Reconstructed {len(pts3D)} points from pair {i}-{i+1}")
+                logger.info(f"Reconstructed {len(pts3D)} points from pair {i}-{j}")
             
             # Save point cloud
             if points_3d:

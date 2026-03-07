@@ -1,0 +1,71 @@
+{
+  "name": "Photogrammetry Test Dataset",
+  "description": "Overlapping views of a crime scene for 3D reconstruction testing",
+  "num_images": 8,
+  "images": [
+    {
+      "filename": "scene_view_01.jpg",
+      "angle": 0.0,
+      "elevation": 15.0,
+      "lat": 17.447409999999998,
+      "lon": 78.3762,
+      "timestamp": "2026-03-07T14:30:00"
+    },
+    {
+      "filename": "scene_view_02.jpg",
+      "angle": 45.0,
+      "elevation": 25.0,
+      "lat": 17.44740707106781,
+      "lon": 78.37620707106781,
+      "timestamp": "2026-03-07T14:30:15"
+    },
+    {
+      "filename": "scene_view_03.jpg",
+      "angle": 90.0,
+      "elevation": 15.000000000000002,
+      "lat": 17.4474,
+      "lon": 78.37621,
+      "timestamp": "2026-03-07T14:30:30"
+    },
+    {
+      "filename": "scene_view_04.jpg",
+      "angle": 135.0,
+      "elevation": 5.0,
+      "lat": 17.447392928932185,
+      "lon": 78.37620707106781,
+      "timestamp": "2026-03-07T14:30:45"
+    },
+    {
+      "filename": "scene_view_05.jpg",
+      "angle": 180.0,
+      "elevation": 14.999999999999998,
+      "lat": 17.44739,
+      "lon": 78.3762,
+      "timestamp": "2026-03-07T14:31:00"
+    },
+    {
+      "filename": "scene_view_06.jpg",
+      "angle": 225.0,
+      "elevation": 25.0,
+      "lat": 17.447392928932185,
+      "lon": 78.37619292893218,
+      "timestamp": "2026-03-07T14:31:15"
+    },
+    {
+      "filename": "scene_view_07.jpg",
+      "angle": 270.0,
+      "elevation": 15.000000000000004,
+      "lat": 17.4474,
+      "lon": 78.37619,
+      "timestamp": "2026-03-07T14:31:30"
+    },
+    {
+      "filename": "scene_view_08.jpg",
+      "angle": 315.0,
+      "elevation": 5.0,
+      "lat": 17.44740707106781,
+      "lon": 78.37619292893218,
+      "timestamp": "2026-03-07T14:31:45"
+    }
+  ]
+}
