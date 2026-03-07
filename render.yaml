@@ -1,0 +1,18 @@
+# Render deployment configuration
+services:
+  - type: web
+    name: forensic-reconstruction-api
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements-deploy.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: CORS_ALLOW_ALL
+        value: true
+      - key: DEBUG
+        value: false
