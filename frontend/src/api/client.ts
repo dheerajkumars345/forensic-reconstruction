@@ -150,12 +150,29 @@ export const imagesAPI = {
     apiClient.get<GpsImagesResponse>(`/projects/${projectId}/images/gps`),
 };
 
+export interface PointCloudData {
+  positions: number[];
+  colors: number[];
+  num_points: number;
+  camera_positions: Array<{
+    filename: string;
+    filepath: string;
+    position: [number, number, number];
+  }>;
+  reconstruction_id: number;
+  quality: string;
+}
+
 export const reconstructionAPI = {
   start: (projectId: number, data: { quality: string }) =>
     apiClient.post<Reconstruction>(`/projects/${projectId}/reconstruct`, data),
   getStatus: (projectId: number) =>
     apiClient.get<Reconstruction>(
       `/projects/${projectId}/reconstruction/status`,
+    ),
+  getPointCloud: (projectId: number) =>
+    apiClient.get<PointCloudData>(
+      `/projects/${projectId}/reconstruction/pointcloud`,
     ),
 };
 

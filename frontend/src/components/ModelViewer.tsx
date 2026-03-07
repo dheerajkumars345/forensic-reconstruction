@@ -31,7 +31,12 @@ import {
   Points,
   Html,
 } from "@react-three/drei";
-import { reconstructionAPI, imagesAPI, STATIC_BASE_URL } from "../api/client";
+import {
+  reconstructionAPI,
+  imagesAPI,
+  STATIC_BASE_URL,
+  PointCloudData,
+} from "../api/client";
 
 interface Props {
   projectId: number;
@@ -140,8 +145,30 @@ function ForensicMarker({
   );
 }
 
-// Structured Point Cloud
-function ForensicPointCloud({ count = 15000 }) {
+// Structured Point Cloud using REAL reconstruction data
+function RealPointCloud({
+  positions,
+  colors,
+}: {
+  positions: Float32Array;
+  colors: Float32Array;
+}) {
+  return (
+    <Points positions={positions} colors={colors} stride={3}>
+      <PointMaterial
+        transparent
+        vertexColors
+        size={0.08}
+        sizeAttenuation={true}
+        depthWrite={false}
+        opacity={0.9}
+      />
+    </Points>
+  );
+}
+
+// Fallback simulated point cloud (when no real data available)
+function SimulatedPointCloud({ count = 15000 }) {
   const points = useMemo(() => {
     const p = new Float32Array(count * 3);
     const c = new Float32Array(count * 3);
@@ -198,6 +225,51 @@ function ModelViewer({ projectId }: Props) {
   const [images, setImages] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState("both");
   const [error, setError] = useState<string | null>(null);
+  const [pointCloudData, setPointCloudData] = useState<PointCloudData | null>(
+    null,
+  );
+
+  // Memoize the point cloud arrays for Three.js
+  const pointCloudArrays = useMemo(() => {
+    if (!pointCloudData || pointCloudData.positions.length === 0) {
+      return null;
+    }
+    // Center and scale the point cloud for better viewing
+    const positions = new Float32Array(pointCloudData.positions);
+    const colors = new Float32Array(pointCloudData.colors);
+
+    // Find bounds to center the point cloud
+    let minX = Infinity,
+      maxX = -Infinity;
+    let minY = Infinity,
+      maxY = -Infinity;
+    let minZ = Infinity,
+      maxZ = -Infinity;
+
+    for (let i = 0; i < positions.length; i += 3) {
+      minX = Math.min(minX, positions[i]);
+      maxX = Math.max(maxX, positions[i]);
+      minY = Math.min(minY, positions[i + 1]);
+      maxY = Math.max(maxY, positions[i + 1]);
+      minZ = Math.min(minZ, positions[i + 2]);
+      maxZ = Math.max(maxZ, positions[i + 2]);
+    }
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const centerZ = (minZ + maxZ) / 2;
+    const range = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
+    const scale = range > 0 ? 20 / range : 1; // Normalize to ~20 units
+
+    // Center and scale
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i] = (positions[i] - centerX) * scale;
+      positions[i + 1] = (positions[i + 1] - centerY) * scale;
+      positions[i + 2] = (positions[i + 2] - centerZ) * scale;
+    }
+
+    return { positions, colors };
+  }, [pointCloudData]);
 
   useEffect(() => {
     checkReconstructionStatus();
@@ -208,8 +280,22 @@ function ModelViewer({ projectId }: Props) {
     try {
       const response = await reconstructionAPI.getStatus(projectId);
       setReconstruction(response.data);
+
+      // If reconstruction is completed, fetch point cloud data
+      if (response.data.status === "completed") {
+        fetchPointCloudData();
+      }
     } catch (err: any) {
       if (err.response?.status !== 404) console.error(err);
+    }
+  };
+
+  const fetchPointCloudData = async () => {
+    try {
+      const response = await reconstructionAPI.getPointCloud(projectId);
+      setPointCloudData(response.data);
+    } catch (err: any) {
+      console.error("Failed to load point cloud", err);
     }
   };
 
@@ -225,13 +311,27 @@ function ModelViewer({ projectId }: Props) {
   const startReconstruction = async () => {
     setLoading(true);
     setError(null);
+    setPointCloudData(null); // Clear old data
     try {
       const response = await reconstructionAPI.start(projectId, {
         quality: "medium",
       });
       setReconstruction(response.data);
+
+      // If completed immediately (synchronous processing)
+      if (response.data.status === "completed") {
+        fetchPointCloudData();
+      } else if (response.data.status === "failed") {
+        setError(
+          response.data.error_message ||
+            "Reconstruction failed. Not enough matching features between images.",
+        );
+      }
     } catch (err: any) {
-      setError("3D Reconstruction Engine failed to initialize");
+      const msg =
+        err.response?.data?.detail ||
+        "3D Reconstruction failed. Ensure images have overlapping views.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -361,18 +461,41 @@ function ModelViewer({ projectId }: Props) {
                 alignItems: "center",
               }}
             >
+              {/* Status chip */}
               <Chip
-                label={`±${reconstruction.estimated_accuracy_cm ?? "N/A"}cm`}
+                label={
+                  reconstruction.status === "completed"
+                    ? "COMPLETE"
+                    : reconstruction.status?.toUpperCase()
+                }
+                size="small"
+                color={
+                  reconstruction.status === "completed"
+                    ? "success"
+                    : reconstruction.status === "failed"
+                      ? "error"
+                      : "warning"
+                }
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: "0.7rem", sm: "0.8125rem" },
+                }}
+              />
+              {/* Real vs Simulated indicator */}
+              <Chip
+                label={pointCloudArrays ? "REAL 3D DATA" : "DEMO MODE"}
                 size="small"
                 sx={{
-                  bgcolor: "rgba(45, 106, 79, 0.15)",
-                  color: "#2d6a4f",
+                  bgcolor: pointCloudArrays
+                    ? "rgba(45, 106, 79, 0.15)"
+                    : "rgba(255, 152, 0, 0.15)",
+                  color: pointCloudArrays ? "#2d6a4f" : "#f57c00",
                   fontWeight: 700,
                   fontSize: { xs: "0.7rem", sm: "0.8125rem" },
                 }}
               />
               <Chip
-                label={`${(reconstruction.num_points ?? 0).toLocaleString()} Pts`}
+                label={`${(pointCloudData?.num_points ?? reconstruction.num_points ?? 0).toLocaleString()} Points`}
                 size="small"
                 sx={{
                   bgcolor: "#1a365d",
@@ -381,6 +504,18 @@ function ModelViewer({ projectId }: Props) {
                   fontSize: { xs: "0.7rem", sm: "0.8125rem" },
                 }}
               />
+              {reconstruction.estimated_accuracy_cm && (
+                <Chip
+                  label={`±${reconstruction.estimated_accuracy_cm}cm accuracy`}
+                  size="small"
+                  sx={{
+                    bgcolor: "rgba(45, 106, 79, 0.15)",
+                    color: "#2d6a4f",
+                    fontWeight: 700,
+                    fontSize: { xs: "0.7rem", sm: "0.8125rem" },
+                  }}
+                />
+              )}
               {reconstruction.orthomosaic_path && !isMobile && (
                 <Button
                   size="small"
@@ -401,6 +536,24 @@ function ModelViewer({ projectId }: Props) {
                 </Button>
               )}
             </Box>
+
+            {/* Show reconstruction details if failed */}
+            {reconstruction.status === "failed" &&
+              reconstruction.error_message && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  {reconstruction.error_message}
+                </Alert>
+              )}
+
+            {/* Show point cloud info if real data available */}
+            {pointCloudData && pointCloudData.num_points > 0 && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                Real 3D reconstruction generated with{" "}
+                {pointCloudData.num_points.toLocaleString()} points from{" "}
+                {pointCloudData.camera_positions?.length || images.length}{" "}
+                images using Structure from Motion (SfM).
+              </Alert>
+            )}
 
             {reconstruction.pipeline && (
               <Box
@@ -494,28 +647,54 @@ function ModelViewer({ projectId }: Props) {
                 position={[0, -2.5, 0]}
               />
 
-              {/* Point Cloud */}
+              {/* Point Cloud - Use REAL data if available */}
               {(viewMode === "cloud" || viewMode === "both") && (
-                <ForensicPointCloud count={20000} />
+                <>
+                  {pointCloudArrays ? (
+                    <RealPointCloud
+                      positions={pointCloudArrays.positions}
+                      colors={pointCloudArrays.colors}
+                    />
+                  ) : (
+                    <SimulatedPointCloud count={20000} />
+                  )}
+                </>
               )}
 
-              {/* Photo Markers */}
+              {/* Photo Markers - Use camera positions from point cloud or estimate */}
               {(viewMode === "images" || viewMode === "both") &&
-                images.map((img, idx) => {
-                  const angle =
-                    (idx / images.length) * Math.PI * 1.5 - Math.PI * 0.75;
-                  const radius = 15;
-                  const x = Math.cos(angle) * radius;
-                  const z = Math.sin(angle) * radius;
-                  return (
-                    <ImageMarker
-                      key={img.id}
-                      url={`${STATIC_BASE_URL}/${img.filepath}`}
-                      position={[x, 4, z]}
-                      label={`SOURCE-PHOTO-${idx + 1}`}
-                    />
-                  );
-                })}
+                (pointCloudData?.camera_positions || images).map(
+                  (item: any, idx: number) => {
+                    // Use real camera position if available, otherwise estimate
+                    let x: number, y: number, z: number;
+                    let filepath: string;
+                    let label: string;
+
+                    if (pointCloudData?.camera_positions && item.position) {
+                      [x, y, z] = item.position;
+                      filepath = item.filepath;
+                      label = `CAMERA-${idx + 1}`;
+                    } else {
+                      const angle =
+                        (idx / images.length) * Math.PI * 1.5 - Math.PI * 0.75;
+                      const radius = 15;
+                      x = Math.cos(angle) * radius;
+                      z = Math.sin(angle) * radius;
+                      y = 4;
+                      filepath = item.filepath;
+                      label = `SOURCE-PHOTO-${idx + 1}`;
+                    }
+
+                    return (
+                      <ImageMarker
+                        key={item.id || idx}
+                        url={`${STATIC_BASE_URL}/${filepath}`}
+                        position={[x, y, z]}
+                        label={label}
+                      />
+                    );
+                  },
+                )}
 
               {/* Forensic Exhibition Markers */}
               <ForensicMarker
