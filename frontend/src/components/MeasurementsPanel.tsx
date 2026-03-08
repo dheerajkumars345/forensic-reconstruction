@@ -37,7 +37,6 @@ import { measurementsAPI, reconstructionAPI } from "../api/client";
 
 interface Props {
   projectId: number;
-  onTabChange?: (index: number) => void;
 }
 
 interface MeasurementForm {
@@ -66,7 +65,7 @@ const initialFormState: MeasurementForm = {
   point2_z: "0",
 };
 
-function MeasurementsPanel({ projectId, onTabChange }: Props) {
+function MeasurementsPanel({ projectId }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [measurements, setMeasurements] = useState<any[]>([]);
@@ -154,7 +153,8 @@ function MeasurementsPanel({ projectId, onTabChange }: Props) {
       await fetchMeasurements();
       handleCloseDialog();
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || "Failed to create measurement";
+      const errorMessage =
+        err.response?.data?.detail || "Failed to create measurement";
       setSubmitError(errorMessage);
     } finally {
       setSubmitting(false);
@@ -432,7 +432,8 @@ function MeasurementsPanel({ projectId, onTabChange }: Props) {
             </Grid>
           </Grid>
           <Alert severity="info" sx={{ mt: 2 }}>
-            Tip: Use the 3D Model viewer to identify coordinates for accurate measurements
+            Tip: Use the 3D Model viewer to identify coordinates for accurate
+            measurements
           </Alert>
         </DialogContent>
         <DialogActions sx={{ p: 2.5, pt: 0 }}>
@@ -464,7 +465,9 @@ function MeasurementsPanel({ projectId, onTabChange }: Props) {
               3D Reconstruction Required
             </Typography>
             <Typography variant="body2">
-              Generate a 3D model in the "3D Model" tab before adding measurements. Measurements require spatial data from the reconstruction.
+              Generate a 3D model in the "3D Model" tab before adding
+              measurements. Measurements require spatial data from the
+              reconstruction.
             </Typography>
           </Alert>
         )}
