@@ -97,11 +97,24 @@ function MeasurementsPanel({ projectId }: Props) {
   const checkReconstruction = async () => {
     try {
       const response = await reconstructionAPI.getStatus(projectId);
-      setHasReconstruction(response.data.status === "completed");
-    } catch {
+      const isCompleted = response.data.status === "completed";
+      console.log("Reconstruction check for project", projectId, ":", response.data.status, "-> hasReconstruction:", isCompleted);
+      setHasReconstruction(isCompleted);
+    } catch (err: any) {
+      // 404 means no reconstruction exists yet
+      console.log("Reconstruction check:", err.response?.status === 404 ? "Not found" : err);
       setHasReconstruction(false);
     }
   };
+
+  // Re-check reconstruction when component mounts or becomes visible
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkReconstruction();
+    }, 3000); // Check every 3 seconds
+    
+    return () => clearInterval(interval);
+  }, [projectId]);
 
   const handleOpenDialog = () => {
     setFormData(initialFormState);

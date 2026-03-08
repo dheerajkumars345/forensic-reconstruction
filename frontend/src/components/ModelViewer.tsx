@@ -71,6 +71,8 @@ function ImageMarker({
           <Box
             component="img"
             src={url}
+            onError={(e) => console.error("Image failed to load:", url, e)}
+            onLoad={() => console.log("Image loaded:", url)}
             sx={{
               width: "100%",
               height: 80,
@@ -300,6 +302,7 @@ function ModelViewer({ projectId, demoMode = false }: Props) {
   const checkReconstructionStatus = async () => {
     try {
       const response = await reconstructionAPI.getStatus(projectId);
+      console.log("ModelViewer reconstruction status for project", projectId, ":", response.data);
       setReconstruction(response.data);
 
       // If reconstruction is completed, fetch point cloud data
@@ -323,6 +326,7 @@ function ModelViewer({ projectId, demoMode = false }: Props) {
   const fetchImages = async () => {
     try {
       const response = await imagesAPI.list(projectId);
+      console.log("Fetched images for project", projectId, ":", response.data);
       setImages(response.data);
     } catch (err: any) {
       console.error("Failed to load images", err);
@@ -788,10 +792,13 @@ function ModelViewer({ projectId, demoMode = false }: Props) {
                       label = `SOURCE-PHOTO-${idx + 1}`;
                     }
 
+                    // Encode URI to handle spaces and special characters in filenames
+                    const imageUrl = `${STATIC_BASE_URL}/${filepath}`.replace(/ /g, '%20');
+                    
                     return (
                       <ImageMarker
                         key={item.id || idx}
-                        url={`${STATIC_BASE_URL}/${filepath}`}
+                        url={imageUrl}
                         position={[x, y, z]}
                         label={label}
                       />
