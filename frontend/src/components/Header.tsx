@@ -92,7 +92,7 @@ function Header() {
             icon={
               <Security sx={{ color: "#2d6a4f !important", fontSize: 16 }} />
             }
-            label={isTablet ? "65B Compliant" : "Section 65B Compliant"}
+            label={isTablet ? "BSA Sec 63" : "BSA Section 63 Compliant"}
             size="small"
             sx={{
               bgcolor: "rgba(45, 106, 79, 0.15)",
@@ -119,7 +119,7 @@ function Header() {
               mr: 1.5,
               boxShadow: "0 0 6px rgba(134, 239, 172, 0.5)",
             }}
-            title="Section 65B Compliant"
+            title="BSA Section 63 Compliant"
           />
         )}
 

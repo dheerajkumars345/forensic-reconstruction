@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     DIGITAL_SIGNATURE: bool = True
     REPORT_LANGUAGE: str = "en-IN"
     
-    # Forensic Compliance (Indian Evidence Act)
+    # Forensic Compliance (Bharatiya Sakshya Adhiniyam, 2023)
     CHAIN_OF_CUSTODY_ENABLED: bool = True
     HASH_ALGORITHM: str = "SHA256"
     TIMESTAMP_VERIFICATION: bool = True

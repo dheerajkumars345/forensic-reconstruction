@@ -1,0 +1,104 @@
+============================================
+  HOW TO RUN THE APPLICATION LOCALLY
+============================================
+
+This application has two parts:
+  1. Backend (Python server) - runs on port 8000
+  2. Frontend (Web interface) - runs on port 3000
+
+============================================
+  REQUIREMENTS
+============================================
+
+Before running, make sure you have installed:
+  - Python 3.9 or higher (download from python.org)
+  - Node.js 18 or higher (download from nodejs.org)
+
+============================================
+  STEP 1: START THE BACKEND SERVER
+============================================
+
+1. Open a Command Prompt or PowerShell window
+
+2. Navigate to the backend folder:
+   cd e:\forensic-antigravity\backend
+
+3. Install Python dependencies (only needed first time):
+   pip install -r requirements.txt
+
+4. Start the backend server:
+   python -m uvicorn main:app --reload --port 8000
+
+5. Keep this window open! The backend is running when you see:
+   "Uvicorn running on http://127.0.0.1:8000"
+
+============================================
+  STEP 2: START THE FRONTEND
+============================================
+
+1. Open a NEW Command Prompt or PowerShell window
+
+2. Navigate to the frontend folder:
+   cd e:\forensic-antigravity\frontend
+
+3. Install dependencies (only needed first time):
+   npm install
+
+4. Start the frontend:
+   npm run dev
+
+5. Keep this window open! The frontend is running when you see:
+   "Local: http://localhost:3000/"
+
+============================================
+  STEP 3: OPEN THE APPLICATION
+============================================
+
+Open your web browser (Chrome, Firefox, Edge) and go to:
+
+   http://localhost:3000
+
+============================================
+  QUICK START (WINDOWS - DOUBLE-CLICK)
+============================================
+
+You can also just double-click these files:
+  - start_backend.bat  (starts the backend)
+  - start_frontend.bat (starts the frontend)
+
+============================================
+  TO STOP THE APPLICATION
+============================================
+
+Press Ctrl+C in both terminal windows to stop the servers.
+
+============================================
+  TROUBLESHOOTING
+============================================
+
+Problem: "python is not recognized"
+Solution: Install Python from python.org and restart your computer
+
+Problem: "npm is not recognized"  
+Solution: Install Node.js from nodejs.org and restart your computer
+
+Problem: "Module not found" error
+Solution: Make sure you ran 'pip install -r requirements.txt' 
+          in the backend folder
+
+Problem: Frontend won't start
+Solution: Make sure you ran 'npm install' in the frontend folder
+
+Problem: Port already in use
+Solution: The app will try the next available port (3001, 3002, etc.)
+          Check the terminal output for the actual URL
+
+============================================
+  ACCESSING THE APPLICATION
+============================================
+
+Backend API:      http://localhost:8000
+API Documentation: http://localhost:8000/docs
+Frontend Web App: http://localhost:3000
+
+============================================

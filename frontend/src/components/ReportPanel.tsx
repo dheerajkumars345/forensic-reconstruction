@@ -61,7 +61,8 @@ function ReportPanel({ projectId, project }: Props) {
       setReport(response.data);
       await fetchAuditLogs();
     } catch (err: any) {
-      setError("Failed to generate forensic report");
+      const errorMessage = err.response?.data?.detail || "Failed to generate forensic report";
+      setError(errorMessage);
       console.error(err);
     } finally {
       setLoading(false);
@@ -130,7 +131,7 @@ function ReportPanel({ projectId, project }: Props) {
                 }}
               />
             }
-            label="Section 65B"
+            label="BSA Sec 63"
             size="small"
             sx={{
               bgcolor: "rgba(45, 106, 79, 0.2)",
@@ -208,14 +209,14 @@ function ReportPanel({ projectId, project }: Props) {
                 color="primary.main"
                 gutterBottom
               >
-                Indian Evidence Act Compliance
+                Bharatiya Sakshya Adhiniyam Compliance
               </Typography>
               <Typography
                 variant="caption"
                 color="text.secondary"
                 component="div"
               >
-                • Section 65B - Electronic Evidence Certificate
+                • Section 63 - Electronic Evidence Certificate
                 <br />
                 • Digital Forensics Standards (RFC 3227)
                 <br />
@@ -282,7 +283,7 @@ function ReportPanel({ projectId, project }: Props) {
               >
                 {loading
                   ? "Generating Forensic Report..."
-                  : "Generate Section 65B Report"}
+                  : "Generate BSA Section 63 Report"}
               </Button>
             )}
 

@@ -28,6 +28,7 @@ async def create_measurement(
             select(Reconstruction)
             .where(Reconstruction.project_id == project_id)
             .order_by(Reconstruction.completed_at.desc())
+            .limit(1)
         )
         reconstruction = result.scalar_one_or_none()
         

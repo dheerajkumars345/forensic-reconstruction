@@ -12,6 +12,8 @@ import {
   Theme,
   useMediaQuery,
   useTheme,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import {
   MapContainer,
@@ -26,6 +28,7 @@ import {
   Satellite,
   LocationOn,
   GpsFixed,
+  Map as MapIcon,
 } from "@mui/icons-material";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -63,6 +66,7 @@ function MapView({ projectId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rejectedGpsCount, setRejectedGpsCount] = useState(0);
+  const [mapLayer, setMapLayer] = useState<"satellite" | "street">("satellite");
 
   useEffect(() => {
     fetchGpsImages();
@@ -189,6 +193,34 @@ function MapView({ projectId }: Props) {
             gap={{ xs: 1, sm: 2 }}
             flexWrap="wrap"
           >
+            <ToggleButtonGroup
+              value={mapLayer}
+              exclusive
+              onChange={(_, val) => val && setMapLayer(val)}
+              size="small"
+              sx={{
+                bgcolor: "rgba(255,255,255,0.1)",
+                "& .MuiToggleButton-root": {
+                  color: "rgba(255,255,255,0.7)",
+                  borderColor: "rgba(255,255,255,0.3)",
+                  px: { xs: 1, sm: 1.5 },
+                  py: 0.5,
+                  "&.Mui-selected": {
+                    bgcolor: "rgba(198, 151, 73, 0.3)",
+                    color: "#c69749",
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="satellite">
+                <Satellite sx={{ fontSize: { xs: 16, sm: 18 }, mr: { xs: 0, sm: 0.5 } }} />
+                {!isMobile && <Typography variant="caption">Satellite</Typography>}
+              </ToggleButton>
+              <ToggleButton value="street">
+                <MapIcon sx={{ fontSize: { xs: 16, sm: 18 }, mr: { xs: 0, sm: 0.5 } }} />
+                {!isMobile && <Typography variant="caption">Street</Typography>}
+              </ToggleButton>
+            </ToggleButtonGroup>
             <Chip
               icon={<GpsFixed sx={{ fontSize: { xs: 14, sm: 16 } }} />}
               label={isMobile ? markers.length : `${markers.length} GPS Points`}
@@ -316,14 +348,22 @@ function MapView({ projectId }: Props) {
           >
             <MapContainer
               center={markers[0].position}
-              zoom={15}
+              zoom={17}
               style={{ height: "100%", width: "100%" }}
               scrollWheelZoom={true}
             >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
+              {mapLayer === "satellite" ? (
+                <TileLayer
+                  attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  maxZoom={19}
+                />
+              ) : (
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+              )}
               {markers.map((marker) => (
                 <Marker key={marker.id} position={marker.position}>
                   <Popup>

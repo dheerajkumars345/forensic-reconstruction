@@ -8,7 +8,7 @@ A comprehensive forensic-grade crime scene reconstruction software that uses pho
 - **Photogrammetric 3D Reconstruction**: Structure from Motion (SfM) pipeline using OpenCV and COLMAP
 - **Accurate Measurements**: Distance, area, volume, and angle measurements with uncertainty estimation
 - **GPS Integration**: Extract GPS coordinates from image EXIF data and visualize on satellite maps
-- **Forensic Reports**: Generate PDF reports compliant with Indian Evidence Act Section 65B
+- **Forensic Reports**: Generate PDF reports compliant with Bharatiya Sakshya Adhiniyam (BSA) Section 63
 - **Chain of Custody**: Complete audit trail with cryptographic hash verification
 - **Image Processing**: EXIF metadata extraction, quality assessment, and feature detection
 
@@ -226,7 +226,7 @@ This system implements forensic best practices:
 - **Chain of Custody**: Complete audit trail of all operations
 - **Timestamp Verification**: All events are timestamped
 - **Metadata Preservation**: Original EXIF data is preserved
-- **Evidence Act Compliance**: Reports follow Indian Evidence Act Section 65B requirements
+- **Evidence Act Compliance**: Reports follow Bharatiya Sakshya Adhiniyam (BSA) Section 63 requirements
 - **Digital Signatures**: Reports can be digitally signed
 
 ## 🧪 Testing
@@ -268,7 +268,7 @@ This system is designed as an educational and practical tool for forensic physic
 - [OpenCV Documentation](https://docs.opencv.org/)
 - [Open3D Documentation](http://www.open3d.org/docs/)
 - [COLMAP Documentation](https://colmap.github.io/)
-- [Indian Evidence Act](https://legislative.gov.in/)
+- [Bharatiya Sakshya Adhiniyam, 2023](https://legislative.gov.in/)
 
 ## 🤝 Contributing
 

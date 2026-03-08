@@ -1,6 +1,6 @@
 """
 Report Generation Service
-Generates forensic PDF reports compliant with Indian Evidence Act
+Generates forensic PDF reports compliant with Bharatiya Sakshya Adhiniyam, 2023
 """
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -195,7 +195,7 @@ class ReportGenerator:
         
         # Disclaimer
         disclaimer = Paragraph(
-            "<i>This report has been prepared in accordance with Indian Evidence Act, 1872 (Section 65B - Electronic Evidence) "
+            "<i>This report has been prepared in accordance with Bharatiya Sakshya Adhiniyam, 2023 (Section 63 - Electronic Evidence) "
             "and follows standard forensic procedures for crime scene reconstruction.</i>",
             self.styles['CustomBody']
         )
@@ -617,7 +617,7 @@ class ReportGenerator:
         2. All evidence images were verified for integrity using cryptographic hashing.<br/>
         3. Chain of custody was maintained throughout the analysis process.<br/>
         4. Measurements and calculations were performed with due care and professional competence.<br/>
-        5. This report has been prepared in accordance with the Indian Evidence Act, 1872 (Section 65B).<br/><br/>
+        5. This report has been prepared in accordance with the Bharatiya Sakshya Adhiniyam, 2023 (Section 63).<br/><br/>
         
         <b>Report Generated:</b> {datetime.now().strftime('%d %B %Y at %H:%M:%S UTC')}<br/>
         <b>System Version:</b> {settings.APP_VERSION}<br/>
