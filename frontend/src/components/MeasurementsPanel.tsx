@@ -37,6 +37,7 @@ import { measurementsAPI, reconstructionAPI } from "../api/client";
 
 interface Props {
   projectId: number;
+  demoMode?: boolean;
 }
 
 interface MeasurementForm {
@@ -65,7 +66,7 @@ const initialFormState: MeasurementForm = {
   point2_z: "0",
 };
 
-function MeasurementsPanel({ projectId }: Props) {
+function MeasurementsPanel({ projectId, demoMode = false }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [measurements, setMeasurements] = useState<any[]>([]);
@@ -75,7 +76,8 @@ function MeasurementsPanel({ projectId }: Props) {
   const [formData, setFormData] = useState<MeasurementForm>(initialFormState);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [hasReconstruction, setHasReconstruction] = useState(false);
+  // In demo mode, allow measurements without reconstruction
+  const [hasReconstruction, setHasReconstruction] = useState(demoMode);
 
   useEffect(() => {
     fetchMeasurements();
@@ -87,7 +89,10 @@ function MeasurementsPanel({ projectId }: Props) {
       const response = await measurementsAPI.list(projectId);
       setMeasurements(response.data);
     } catch (err: any) {
-      setError("Failed to load measurements");
+      // In demo mode, don't show error - just use empty/local measurements
+      if (!demoMode) {
+        setError("Failed to load measurements");
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -95,6 +100,11 @@ function MeasurementsPanel({ projectId }: Props) {
   };
 
   const checkReconstruction = async () => {
+    // In demo mode, always allow measurements
+    if (demoMode) {
+      setHasReconstruction(true);
+      return;
+    }
     try {
       const response = await reconstructionAPI.getStatus(projectId);
       const isCompleted = response.data.status === "completed";
@@ -166,9 +176,30 @@ function MeasurementsPanel({ projectId }: Props) {
       await fetchMeasurements();
       handleCloseDialog();
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.detail || "Failed to create measurement";
-      setSubmitError(errorMessage);
+      if (demoMode) {
+        // In demo mode, simulate successful measurement creation
+        const simulatedMeasurement = {
+          id: Date.now(),
+          name: formData.name,
+          measurement_type: formData.measurement_type,
+          description: formData.description,
+          created_by: formData.created_by,
+          value: Math.sqrt(
+            Math.pow(parseFloat(formData.point2_x) - parseFloat(formData.point1_x), 2) +
+            Math.pow(parseFloat(formData.point2_y) - parseFloat(formData.point1_y), 2) +
+            Math.pow(parseFloat(formData.point2_z) - parseFloat(formData.point1_z), 2)
+          ),
+          unit: formData.measurement_type === "distance" ? "meters" : "square meters",
+          uncertainty: 0.02,
+          created_at: new Date().toISOString(),
+        };
+        setMeasurements((prev) => [...prev, simulatedMeasurement]);
+        handleCloseDialog();
+      } else {
+        const errorMessage =
+          err.response?.data?.detail || "Failed to create measurement";
+        setSubmitError(errorMessage);
+      }
     } finally {
       setSubmitting(false);
     }

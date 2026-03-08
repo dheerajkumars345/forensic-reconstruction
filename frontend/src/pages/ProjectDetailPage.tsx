@@ -499,6 +499,7 @@ function ProjectDetailPage() {
         <TabPanel value={currentTab} index={3}>
           <MeasurementsPanel
             projectId={parseInt(projectId!)}
+            demoMode={demoMode}
           />
         </TabPanel>
 
@@ -507,6 +508,7 @@ function ProjectDetailPage() {
             projectId={parseInt(projectId!)}
             project={project}
             onTabChange={setCurrentTab}
+            demoMode={demoMode}
           />
         </TabPanel>
       </Container>

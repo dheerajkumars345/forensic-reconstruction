@@ -30,9 +30,10 @@ interface Props {
   projectId: number;
   project: Project;
   onTabChange?: (index: number) => void;
+  demoMode?: boolean;
 }
 
-function ReportPanel({ projectId, project }: Props) {
+function ReportPanel({ projectId, project, demoMode = false }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [loading, setLoading] = useState(false);
@@ -61,9 +62,19 @@ function ReportPanel({ projectId, project }: Props) {
       setReport(response.data);
       await fetchAuditLogs();
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || "Failed to generate forensic report";
-      setError(errorMessage);
-      console.error(err);
+      if (demoMode) {
+        // In demo mode, simulate successful report generation
+        setReport({
+          message: "Demo Report generated successfully",
+          report_path: null,
+          report_hash: "demo-" + Date.now().toString(16),
+          isDemo: true,
+        });
+      } else {
+        const errorMessage = err.response?.data?.detail || "Failed to generate forensic report";
+        setError(errorMessage);
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -235,7 +246,7 @@ function ReportPanel({ projectId, project }: Props) {
                 icon={<CheckCircle />}
               >
                 <Typography variant="subtitle2" fontWeight={600}>
-                  Report generated successfully!
+                  {report.isDemo ? "Demo Report Preview Generated!" : "Report generated successfully!"}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -245,19 +256,25 @@ function ReportPanel({ projectId, project }: Props) {
                 >
                   Hash: {report.report_hash?.substring(0, 32)}...
                 </Typography>
-                <Button
-                  startIcon={<Download />}
-                  href={`${API_BASE_URL.replace("/api", "")}/${report.report_path}`}
-                  target="_blank"
-                  variant="contained"
-                  size="small"
-                  sx={{
-                    bgcolor: "#2d6a4f",
-                    "&:hover": { bgcolor: "#1b4332" },
-                  }}
-                >
-                  Download PDF Report
-                </Button>
+                {report.report_path ? (
+                  <Button
+                    startIcon={<Download />}
+                    href={`${API_BASE_URL.replace("/api", "")}/${report.report_path}`}
+                    target="_blank"
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      bgcolor: "#2d6a4f",
+                      "&:hover": { bgcolor: "#1b4332" },
+                    }}
+                  >
+                    Download PDF Report
+                  </Button>
+                ) : (
+                  <Typography variant="caption" color="text.secondary">
+                    (Demo mode - PDF download unavailable)
+                  </Typography>
+                )}
               </Alert>
             ) : (
               <Button
